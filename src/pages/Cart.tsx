@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Trash2, Plus, Minus } from 'lucide-react'
+import { Trash2, Plus, Minus, X } from 'lucide-react'
 import { useCart } from '../contexts/CartContext'
 import { useAuth } from '../contexts/AuthContext'
 import { api } from '../lib/api'
@@ -13,6 +13,7 @@ export default function Cart() {
   const [submitting, setSubmitting] = useState(false)
   const [orderSuccess, setOrderSuccess] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'COD' | 'Chuyển khoản'>('COD')
+  const [showCheckout, setShowCheckout] = useState(false)
 
   const [formData, setFormData] = useState({
     customer_name: '',
@@ -75,6 +76,7 @@ export default function Cart() {
 
       await api.post('/api/orders', body)
       clearCart()
+      setShowCheckout(false)
       setOrderSuccess(true)
     } catch (err) {
       console.error(err)
@@ -153,7 +155,7 @@ export default function Cart() {
             <span className="text-orange-500">{totalPrice.toLocaleString('vi-VN')} ₫</span>
           </div>
           <button
-            onClick={() => document.getElementById('checkoutForm')?.scrollIntoView({ behavior: 'smooth' })}
+            onClick={() => setShowCheckout(true)}
             className="w-full mt-6 bg-orange-500 text-white py-3 rounded"
           >
             Tiến hành đặt hàng
@@ -161,57 +163,68 @@ export default function Cart() {
         </div>
       </div>
 
-      {/* CHECKOUT */}
-      <div id="checkoutForm" className="max-w-xl mx-auto mt-12">
-        <h3 className="text-xl font-bold mb-4">Thông tin giao hàng</h3>
-        <form onSubmit={handleCheckout} className="space-y-4">
-          <input
-            required placeholder="Họ và tên" className="w-full border p-3"
-            value={formData.customer_name} onChange={e => setFormData({ ...formData, customer_name: e.target.value })}
-          />
-          <input
-            required placeholder="Số điện thoại" className="w-full border p-3"
-            value={formData.customer_phone} onChange={e => setFormData({ ...formData, customer_phone: e.target.value })}
-          />
-          <input
-            required type="email" placeholder="Email" className="w-full border p-3"
-            value={formData.customer_email} onChange={e => setFormData({ ...formData, customer_email: e.target.value })}
-          />
-          <textarea
-            required placeholder="Địa chỉ giao hàng" className="w-full border p-3"
-            value={formData.delivery_address} onChange={e => setFormData({ ...formData, delivery_address: e.target.value })}
-          />
-          <input
-            required placeholder="Thành phố" className="w-full border p-3"
-            value={formData.shipping_city} onChange={e => setFormData({ ...formData, shipping_city: e.target.value })}
-          />
-          <input
-            required placeholder="Mã bưu chính" className="w-full border p-3"
-            value={formData.shipping_postal_code} onChange={e => setFormData({ ...formData, shipping_postal_code: e.target.value })}
-          />
-          <input
-            required placeholder="Quốc gia" className="w-full border p-3"
-            value={formData.shipping_country} onChange={e => setFormData({ ...formData, shipping_country: e.target.value })}
-          />
+      {/* CHECKOUT MODAL */}
+      {/* CHECKOUT MODAL */}
+{showCheckout && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 px-4">
+    <div className="bg-white rounded shadow-lg w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 relative">
+      <button
+        className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+        onClick={() => setShowCheckout(false)}
+      >
+        <X size={20} />
+      </button>
+      <h3 className="text-xl font-bold mb-4">Thông tin giao hàng</h3>
+      <form onSubmit={handleCheckout} className="space-y-4">
+        <input
+          required placeholder="Họ và tên" className="w-full border p-3 rounded"
+          value={formData.customer_name} onChange={e => setFormData({ ...formData, customer_name: e.target.value })}
+        />
+        <input
+          required placeholder="Số điện thoại" className="w-full border p-3 rounded"
+          value={formData.customer_phone} onChange={e => setFormData({ ...formData, customer_phone: e.target.value })}
+        />
+        <input
+          required type="email" placeholder="Email" className="w-full border p-3 rounded"
+          value={formData.customer_email} onChange={e => setFormData({ ...formData, customer_email: e.target.value })}
+        />
+        <textarea
+          required placeholder="Địa chỉ giao hàng" className="w-full border p-3 rounded"
+          value={formData.delivery_address} onChange={e => setFormData({ ...formData, delivery_address: e.target.value })}
+        />
+        <input
+          required placeholder="Thành phố" className="w-full border p-3 rounded"
+          value={formData.shipping_city} onChange={e => setFormData({ ...formData, shipping_city: e.target.value })}
+        />
+        <input
+          required placeholder="Mã bưu chính" className="w-full border p-3 rounded"
+          value={formData.shipping_postal_code} onChange={e => setFormData({ ...formData, shipping_postal_code: e.target.value })}
+        />
+        <input
+          required placeholder="Quốc gia" className="w-full border p-3 rounded"
+          value={formData.shipping_country} onChange={e => setFormData({ ...formData, shipping_country: e.target.value })}
+        />
 
-          {/* PAYMENT */}
-          <div className="space-y-2">
-            <p className="font-semibold">Phương thức thanh toán</p>
-            <label className="flex items-center gap-2">
-              <input type="radio" checked={paymentMethod === 'COD'} onChange={() => setPaymentMethod('COD')} />
-              Thanh toán khi nhận hàng (COD)
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="radio" checked={paymentMethod === 'Chuyển khoản'} onChange={() => setPaymentMethod('Chuyển khoản')} />
-              Chuyển khoản ngân hàng
-            </label>
-          </div>
+        {/* PAYMENT */}
+        <div className="space-y-2">
+          <p className="font-semibold">Phương thức thanh toán</p>
+          <label className="flex items-center gap-2">
+            <input type="radio" checked={paymentMethod === 'COD'} onChange={() => setPaymentMethod('COD')} />
+            Thanh toán khi nhận hàng (COD)
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="radio" checked={paymentMethod === 'Chuyển khoản'} onChange={() => setPaymentMethod('Chuyển khoản')} />
+            Chuyển khoản ngân hàng
+          </label>
+        </div>
 
-          <button type="submit" disabled={submitting} className="w-full bg-orange-500 text-white py-3 rounded">
-            {submitting ? 'Đang xử lý...' : 'Xác nhận đặt hàng'}
-          </button>
-        </form>
-      </div>
+        <button type="submit" disabled={submitting} className="w-full bg-orange-500 text-white py-3 rounded">
+          {submitting ? 'Đang xử lý...' : 'Xác nhận đặt hàng'}
+        </button>
+      </form>
+    </div>
+  </div>
+)}
     </div>
   )
 }

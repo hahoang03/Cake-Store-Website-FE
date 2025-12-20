@@ -4,6 +4,7 @@ import { api } from '../lib/api'
 export interface User {
   id: string
   email: string
+  name: string;
 }
 
 export interface UserProfile {
@@ -60,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser({
         id: user.id,
         email: user.email,
+        name: user.name,
       })
 
       setProfile({

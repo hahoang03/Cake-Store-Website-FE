@@ -5,17 +5,12 @@ interface Profile {
   id: string;
   email: string;
   name: string;
-  phone?: string;
-  address?: string;
+  is_admin: boolean;
 }
 
 export default function ProfileManager() {
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    address: '',
-  });
+  const [formData, setFormData] = useState({ name: '' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -28,15 +23,9 @@ export default function ProfileManager() {
   const fetchProfile = async () => {
     try {
       const res = await api.get('/api/auth/profile');
-
-      const data = res.data;
-      setProfile(data);
-
-      setFormData({
-        name: data.name || '',
-        phone: data.phone || '',
-        address: data.address || '',
-      });
+      const userData = res.data.data; // lấy data từ API
+      setProfile(userData);
+      setFormData({ name: userData.name || '' }); // set tên hiện tại vào input
     } catch (error) {
       console.error(error);
       setMessage('Không thể tải thông tin người dùng');
@@ -52,14 +41,9 @@ export default function ProfileManager() {
     setMessage('');
 
     try {
-      await api.put('/api/auth/profile', {
-        name: formData.name,
-        phone: formData.phone,
-        address: formData.address,
-      });
-
+      await api.put('/api/auth/profile', { name: formData.name });
       setMessage('Cập nhật thông tin thành công!');
-      fetchProfile();
+      fetchProfile(); // reload profile
     } catch (error) {
       console.error(error);
       setMessage('Có lỗi xảy ra. Vui lòng thử lại.');
@@ -68,40 +52,44 @@ export default function ProfileManager() {
     }
   };
 
-  if (loading) return <p>Đang tải...</p>;
-  if (!profile) return <p>Không có dữ liệu</p>;
+  if (loading) return <p className="text-center py-10">Đang tải thông tin...</p>;
+  if (!profile) return <p className="text-center py-10">Không có dữ liệu</p>;
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-2xl mx-auto p-4">
       <h2 className="text-2xl font-bold mb-6">Thông tin cá nhân</h2>
 
-      {message && <p className="mb-4">{message}</p>}
+      {message && <p className={`mb-4 ${message.includes('thành công') ? 'text-green-600' : 'text-red-600'}`}>{message}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input disabled value={profile.email} className="input" />
+        <div>
+          <label className="block mb-1 font-semibold">Email</label>
+          <input
+            type="email"
+            disabled
+            value={profile.email}
+            className="w-full border p-3 rounded bg-gray-100"
+          />
+        </div>
 
-        <input
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className="input"
-          placeholder="Họ và tên"
-        />
+        <div>
+          <label className="block mb-1 font-semibold">Họ và tên</label>
+          <input
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            className="w-full border p-3 rounded"
+            placeholder="Họ và tên"
+          />
+        </div>
 
-        <input
-          value={formData.phone}
-          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-          className="input"
-          placeholder="Số điện thoại"
-        />
+        <p className="font-semibold">Quyền: {profile.is_admin ? 'Admin' : 'User'}</p>
 
-        <textarea
-          value={formData.address}
-          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-          className="input"
-          placeholder="Địa chỉ"
-        />
-
-        <button disabled={saving} className="btn-primary">
+        <button
+          type="submit"
+          disabled={saving}
+          className="w-full bg-[#3E5D2A] text-white py-3 rounded font-bold"
+        >
           {saving ? 'Đang lưu...' : 'Cập nhật'}
         </button>
       </form>

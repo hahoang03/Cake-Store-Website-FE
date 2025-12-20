@@ -4,6 +4,7 @@ import { api } from '../../lib/api'
 type Category = {
   id: string
   name: string
+  description?: string
 }
 
 type Product = {
@@ -20,13 +21,15 @@ type Product = {
 
 export default function ProductsManager() {
   const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null)
   const [creatingProduct, setCreatingProduct] = useState<Partial<Product> | null>(null)
-  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     fetchProducts()
+    fetchCategories()
   }, [])
 
   const fetchProducts = async () => {
@@ -38,6 +41,34 @@ export default function ProductsManager() {
       setProducts([])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchCategories = async () => {
+    try {
+      const res = await api.get('/api/categories')
+      setCategories(res.data.data || [])
+    } catch (err) {
+      console.error('Load categories error:', err)
+      setCategories([])
+    }
+  }
+
+  const createProduct = async (product: Partial<Product>) => {
+    try {
+      setSaving(true)
+      if (!product.name || product.price == null || !product.category_id) {
+        alert('Tên, giá và danh mục là bắt buộc.')
+        return
+      }
+      const res = await api.post('/api/products', product)
+      if (res.data && res.data.data) setProducts((prev) => [...prev, res.data.data])
+      setCreatingProduct(null)
+    } catch (err) {
+      console.error('Create product error:', err)
+      alert('Tạo sản phẩm thất bại.')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -53,11 +84,9 @@ export default function ProductsManager() {
         count_in_stock: product.count_in_stock,
         description: product.description,
       }
-
       const res = await api.put(`/api/products/${id}`, payload)
       if (res.data && res.data.data) {
-        const updated = { ...res.data.data, categories: editingProduct?.categories }
-        setProducts((prev) => prev.map((p) => (p.id === id ? updated : p)))
+        setProducts((prev) => prev.map((p) => (p.id === id ? res.data.data : p)))
         setEditingProduct(null)
       }
     } catch (err) {
@@ -68,26 +97,8 @@ export default function ProductsManager() {
     }
   }
 
-  const createProduct = async (product: Partial<Product>) => {
-    try {
-      setSaving(true)
-      if (!product.name || product.price == null || !product.category_id) {
-        alert('Tên, giá và category là bắt buộc.')
-        setSaving(false)
-        return
-      }
-      const res = await api.post('/api/products', product)
-      if (res.data && res.data.data) setProducts((prev) => [...prev, res.data.data])
-      setCreatingProduct(null)
-    } catch (err) {
-      console.error('Create product error:', err)
-      alert('Tạo sản phẩm thất bại. Kiểm tra dữ liệu.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
   const deleteProduct = async (id: string) => {
+    if (!confirm('Bạn có chắc muốn xóa sản phẩm này?')) return
     try {
       await api.delete(`/api/products/${id}`)
       setProducts((prev) => prev.filter((p) => p.id !== id))
@@ -133,7 +144,9 @@ export default function ProductsManager() {
               <td className="p-2">{p.price} ₫</td>
               <td className="p-2">{p.count_in_stock}</td>
               <td className="p-2">{p.categories?.name || '-'}</td>
-              <td className="p-2">{p.description}</td>
+              <td className="p-2" style={{ whiteSpace: 'pre-line' }}>
+                {p.description}
+              </td>
               <td className="p-2 flex gap-2">
                 <button className="text-blue-500" onClick={() => setEditingProduct({ ...p })}>
                   Sửa
@@ -244,19 +257,26 @@ export default function ProductsManager() {
                   setCreatingProduct((prev) => ({ ...prev, description: e.target.value }))
                 }
                 className="border p-1 rounded w-full"
+                rows={5}
               />
             </label>
 
             <label className="block mb-4">
-              Category ID:
-              <input
-                type="text"
+              Danh mục:
+              <select
                 value={creatingProduct.category_id || ''}
                 onChange={(e) =>
                   setCreatingProduct((prev) => ({ ...prev, category_id: e.target.value }))
                 }
                 className="border p-1 rounded w-full"
-              />
+              >
+                <option value="">-- Chọn danh mục --</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <div className="flex justify-end gap-2">
@@ -358,19 +378,26 @@ export default function ProductsManager() {
                   setEditingProduct((prev) => ({ ...prev, description: e.target.value }))
                 }
                 className="border p-1 rounded w-full"
+                rows={5}
               />
             </label>
 
             <label className="block mb-4">
-              Category ID:
-              <input
-                type="text"
+              Danh mục:
+              <select
                 value={editingProduct.category_id || ''}
                 onChange={(e) =>
                   setEditingProduct((prev) => ({ ...prev, category_id: e.target.value }))
                 }
                 className="border p-1 rounded w-full"
-              />
+              >
+                <option value="">-- Chọn danh mục --</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <div className="flex justify-end gap-2">
@@ -382,7 +409,9 @@ export default function ProductsManager() {
               </button>
               <button
                 className="px-4 py-2 bg-green-500 text-white rounded"
-                onClick={() => editingProduct.id && updateProduct(editingProduct.id, editingProduct)}
+                onClick={() =>
+                  editingProduct.id && updateProduct(editingProduct.id, editingProduct)
+                }
                 disabled={saving}
               >
                 {saving ? 'Đang lưu...' : 'Lưu'}

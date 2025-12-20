@@ -15,6 +15,8 @@ import Loyalty from './pages/Loyalty';
 import News from './pages/News';
 import Signup from './pages/Signup'
 import AdminRoute from './routes/AdminRoute';
+import OrderTracking from './pages/OrderTracking'
+import OrderDetail from './pages/OrderDetail';
 
 
 function App() {
@@ -36,7 +38,9 @@ function App() {
                 <Route path="/stores" element={<Stores />} />
                 <Route path="/loyalty" element={<Loyalty />} />
                 <Route path="/news" element={<News />} />
+                <Route path="/my-orders" element={<OrderTracking />} />
                 <Route path="/signup" element={<Signup />} />
+                <Route path="/orders/:id" element={<OrderDetail />} />
                 <Route
   path="/admin"
   element={

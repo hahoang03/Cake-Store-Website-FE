@@ -94,8 +94,11 @@ export default function ProductDetail() {
             {product.price.toLocaleString('vi-VN')} ₫
           </p>
 
+          <p><strong>Mô tả:</strong> {product.description}</p>
           <p><strong>Thương hiệu:</strong> {product.brand || 'Không có'}</p>
-          <p><strong>Kho:</strong> {product.count_in_stock}</p>
+          <p><strong>Số lượng:</strong> {product.count_in_stock}</p>
+
+
 
           <div className="flex items-center gap-3 my-4">
             <button
@@ -126,11 +129,6 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* DESCRIPTION */}
-      <div className="mb-12">
-        <h2 className="text-2xl font-bold mb-3">Mô tả</h2>
-        <p>{product.description}</p>
-      </div>
 
       {/* REVIEWS */}
       <div>
