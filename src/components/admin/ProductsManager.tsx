@@ -1,0 +1,396 @@
+import { useEffect, useState } from 'react'
+import { api } from '../../lib/api'
+
+type Category = {
+  id: string
+  name: string
+}
+
+type Product = {
+  id: string
+  name: string
+  price: number
+  image: string
+  brand: string
+  category_id: string
+  count_in_stock: number
+  description: string
+  categories?: Category
+}
+
+export default function ProductsManager() {
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null)
+  const [creatingProduct, setCreatingProduct] = useState<Partial<Product> | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    fetchProducts()
+  }, [])
+
+  const fetchProducts = async () => {
+    try {
+      const res = await api.get('/api/products')
+      setProducts(res.data.data || [])
+    } catch (err) {
+      console.error('Load products error:', err)
+      setProducts([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const updateProduct = async (id: string, product: Partial<Product>) => {
+    try {
+      setSaving(true)
+      const payload = {
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        brand: product.brand,
+        category_id: product.category_id,
+        count_in_stock: product.count_in_stock,
+        description: product.description,
+      }
+
+      const res = await api.put(`/api/products/${id}`, payload)
+      if (res.data && res.data.data) {
+        const updated = { ...res.data.data, categories: editingProduct?.categories }
+        setProducts((prev) => prev.map((p) => (p.id === id ? updated : p)))
+        setEditingProduct(null)
+      }
+    } catch (err) {
+      console.error(`Update product ${id} error:`, err)
+      alert('Cập nhật thất bại.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const createProduct = async (product: Partial<Product>) => {
+    try {
+      setSaving(true)
+      if (!product.name || product.price == null || !product.category_id) {
+        alert('Tên, giá và category là bắt buộc.')
+        setSaving(false)
+        return
+      }
+      const res = await api.post('/api/products', product)
+      if (res.data && res.data.data) setProducts((prev) => [...prev, res.data.data])
+      setCreatingProduct(null)
+    } catch (err) {
+      console.error('Create product error:', err)
+      alert('Tạo sản phẩm thất bại. Kiểm tra dữ liệu.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const deleteProduct = async (id: string) => {
+    try {
+      await api.delete(`/api/products/${id}`)
+      setProducts((prev) => prev.filter((p) => p.id !== id))
+    } catch (err) {
+      console.error(`Delete product ${id} error:`, err)
+      alert('Xóa thất bại.')
+    }
+  }
+
+  if (loading) return <div className="p-6">Đang tải sản phẩm...</div>
+
+  return (
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-4">Danh sách sản phẩm</h2>
+
+      <table className="w-full border">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="p-2 text-left">Hình</th>
+            <th className="p-2 text-left">Tên</th>
+            <th className="p-2 text-left">Thương hiệu</th>
+            <th className="p-2 text-left">Giá</th>
+            <th className="p-2 text-left">Số lượng</th>
+            <th className="p-2 text-left">Danh mục</th>
+            <th className="p-2 text-left">Mô tả</th>
+            <th className="p-2 text-left">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          {products.map((p) => (
+            <tr key={p.id} className="border-t">
+              <td className="p-2">
+                {p.image ? (
+                  <img src={p.image} alt={p.name} className="w-14 h-14 object-cover rounded" />
+                ) : (
+                  <div className="w-14 h-14 bg-gray-200 flex items-center justify-center text-gray-500 text-xs">
+                    No Image
+                  </div>
+                )}
+              </td>
+              <td className="p-2">{p.name}</td>
+              <td className="p-2">{p.brand}</td>
+              <td className="p-2">{p.price} ₫</td>
+              <td className="p-2">{p.count_in_stock}</td>
+              <td className="p-2">{p.categories?.name || '-'}</td>
+              <td className="p-2">{p.description}</td>
+              <td className="p-2 flex gap-2">
+                <button className="text-blue-500" onClick={() => setEditingProduct({ ...p })}>
+                  Sửa
+                </button>
+                <button className="text-red-500" onClick={() => deleteProduct(p.id)}>
+                  Xóa
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <button
+        className="mt-4 px-4 py-2 bg-green-500 text-white rounded"
+        onClick={() =>
+          setCreatingProduct({
+            name: '',
+            price: 0,
+            image: '',
+            brand: '',
+            category_id: '',
+            count_in_stock: 0,
+            description: '',
+          })
+        }
+      >
+        Thêm sản phẩm
+      </button>
+
+      {/* --- Modal Create --- */}
+      {creatingProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-20 z-50">
+          <div className="bg-white p-6 rounded w-96 max-h-[90vh] overflow-y-auto shadow-lg">
+            <h3 className="text-xl font-bold mb-4">Thêm sản phẩm mới</h3>
+
+            <label className="block mb-2">
+              Tên:
+              <input
+                type="text"
+                value={creatingProduct.name || ''}
+                onChange={(e) =>
+                  setCreatingProduct((prev) => ({ ...prev, name: e.target.value }))
+                }
+                className="border p-1 rounded w-full"
+              />
+            </label>
+
+            <label className="block mb-2">
+              Thương hiệu:
+              <input
+                type="text"
+                value={creatingProduct.brand || ''}
+                onChange={(e) =>
+                  setCreatingProduct((prev) => ({ ...prev, brand: e.target.value }))
+                }
+                className="border p-1 rounded w-full"
+              />
+            </label>
+
+            <label className="block mb-2">
+              Giá:
+              <input
+                type="number"
+                value={creatingProduct.price ?? 0}
+                onChange={(e) =>
+                  setCreatingProduct((prev) => ({
+                    ...prev,
+                    price: Number(e.target.value),
+                  }))
+                }
+                className="border p-1 rounded w-full"
+              />
+            </label>
+
+            <label className="block mb-2">
+              Hình ảnh URL:
+              <input
+                type="text"
+                value={creatingProduct.image || ''}
+                onChange={(e) =>
+                  setCreatingProduct((prev) => ({ ...prev, image: e.target.value }))
+                }
+                className="border p-1 rounded w-full"
+              />
+            </label>
+
+            <label className="block mb-2">
+              Số lượng:
+              <input
+                type="number"
+                value={creatingProduct.count_in_stock ?? 0}
+                onChange={(e) =>
+                  setCreatingProduct((prev) => ({
+                    ...prev,
+                    count_in_stock: Number(e.target.value),
+                  }))
+                }
+                className="border p-1 rounded w-full"
+              />
+            </label>
+
+            <label className="block mb-2">
+              Mô tả:
+              <textarea
+                value={creatingProduct.description || ''}
+                onChange={(e) =>
+                  setCreatingProduct((prev) => ({ ...prev, description: e.target.value }))
+                }
+                className="border p-1 rounded w-full"
+              />
+            </label>
+
+            <label className="block mb-4">
+              Category ID:
+              <input
+                type="text"
+                value={creatingProduct.category_id || ''}
+                onChange={(e) =>
+                  setCreatingProduct((prev) => ({ ...prev, category_id: e.target.value }))
+                }
+                className="border p-1 rounded w-full"
+              />
+            </label>
+
+            <div className="flex justify-end gap-2">
+              <button
+                className="px-4 py-2 bg-gray-300 rounded"
+                onClick={() => setCreatingProduct(null)}
+              >
+                Hủy
+              </button>
+              <button
+                className="px-4 py-2 bg-green-500 text-white rounded"
+                onClick={() => creatingProduct && createProduct(creatingProduct)}
+                disabled={saving}
+              >
+                {saving ? 'Đang lưu...' : 'Lưu'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- Modal Edit --- */}
+      {editingProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-20 z-50">
+          <div className="bg-white p-6 rounded w-96 max-h-[90vh] overflow-y-auto shadow-lg">
+            <h3 className="text-xl font-bold mb-4">Sửa sản phẩm</h3>
+
+            <label className="block mb-2">
+              Tên:
+              <input
+                type="text"
+                value={editingProduct.name || ''}
+                onChange={(e) =>
+                  setEditingProduct((prev) => ({ ...prev, name: e.target.value }))
+                }
+                className="border p-1 rounded w-full"
+              />
+            </label>
+
+            <label className="block mb-2">
+              Thương hiệu:
+              <input
+                type="text"
+                value={editingProduct.brand || ''}
+                onChange={(e) =>
+                  setEditingProduct((prev) => ({ ...prev, brand: e.target.value }))
+                }
+                className="border p-1 rounded w-full"
+              />
+            </label>
+
+            <label className="block mb-2">
+              Giá:
+              <input
+                type="number"
+                value={editingProduct.price ?? 0}
+                onChange={(e) =>
+                  setEditingProduct((prev) => ({
+                    ...prev,
+                    price: Number(e.target.value),
+                  }))
+                }
+                className="border p-1 rounded w-full"
+              />
+            </label>
+
+            <label className="block mb-2">
+              Hình ảnh URL:
+              <input
+                type="text"
+                value={editingProduct.image || ''}
+                onChange={(e) =>
+                  setEditingProduct((prev) => ({ ...prev, image: e.target.value }))
+                }
+                className="border p-1 rounded w-full"
+              />
+            </label>
+
+            <label className="block mb-2">
+              Số lượng:
+              <input
+                type="number"
+                value={editingProduct.count_in_stock ?? 0}
+                onChange={(e) =>
+                  setEditingProduct((prev) => ({
+                    ...prev,
+                    count_in_stock: Number(e.target.value),
+                  }))
+                }
+                className="border p-1 rounded w-full"
+              />
+            </label>
+
+            <label className="block mb-2">
+              Mô tả:
+              <textarea
+                value={editingProduct.description || ''}
+                onChange={(e) =>
+                  setEditingProduct((prev) => ({ ...prev, description: e.target.value }))
+                }
+                className="border p-1 rounded w-full"
+              />
+            </label>
+
+            <label className="block mb-4">
+              Category ID:
+              <input
+                type="text"
+                value={editingProduct.category_id || ''}
+                onChange={(e) =>
+                  setEditingProduct((prev) => ({ ...prev, category_id: e.target.value }))
+                }
+                className="border p-1 rounded w-full"
+              />
+            </label>
+
+            <div className="flex justify-end gap-2">
+              <button
+                className="px-4 py-2 bg-gray-300 rounded"
+                onClick={() => setEditingProduct(null)}
+              >
+                Hủy
+              </button>
+              <button
+                className="px-4 py-2 bg-green-500 text-white rounded"
+                onClick={() => editingProduct.id && updateProduct(editingProduct.id, editingProduct)}
+                disabled={saving}
+              >
+                {saving ? 'Đang lưu...' : 'Lưu'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
