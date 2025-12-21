@@ -16,7 +16,7 @@ export default function News() {
               Ra mắt bộ sưu tập bánh Giáng Sinh 2024
             </h2>
             <p className="text-gray-700 leading-relaxed">
-              Cái Lò Nướng vui mừng giới thiệu bộ sưu tập bánh Giáng Sinh đặc biệt với nhiều
+              H&T vui mừng giới thiệu bộ sưu tập bánh Giáng Sinh đặc biệt với nhiều
               hương vị mới lạ và thiết kế độc đáo. Đặt hàng sớm để nhận ưu đãi lên đến 20%.
             </p>
           </div>

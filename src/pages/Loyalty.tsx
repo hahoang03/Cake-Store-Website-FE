@@ -7,7 +7,7 @@ export default function Loyalty() {
         <section>
           <h2 className="text-xl font-bold text-gray-800 mb-3">Chương trình thành viên</h2>
           <p className="text-gray-700 leading-relaxed">
-            Trở thành thành viên của Cái Lò Nướng để nhận được nhiều ưu đãi đặc biệt và tích điểm
+            Trở thành thành viên của H&T để nhận được nhiều ưu đãi đặc biệt và tích điểm
             với mỗi lần mua hàng.
           </p>
         </section>

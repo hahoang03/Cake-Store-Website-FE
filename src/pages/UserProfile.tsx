@@ -13,7 +13,7 @@ interface Profile {
 export default function UserProfile() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [formData, setFormData] = useState({ name: '', password: '' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -26,11 +26,11 @@ export default function UserProfile() {
   const fetchProfile = async () => {
     try {
       const res = await api.get('/api/auth/profile', {
-        //headers: { Authorization: `Bearer ${user?.token}` },
+       // headers: { Authorization: `Bearer ${user?.token}` },
       });
       const data = res.data.data;
       setProfile(data);
-      setFormData({ name: data.name || '', email: data.email || '', password: '' });
+      setFormData({ name: data.name || '', password: '' });
     } catch (err) {
       console.error(err);
       setMessage('Không thể tải thông tin người dùng');
@@ -46,11 +46,11 @@ export default function UserProfile() {
     setMessage('');
 
     try {
-      const payload: any = { name: formData.name, email: formData.email };
+      const payload: any = { name: formData.name };
       if (formData.password) payload.password = formData.password;
 
       await api.put('/api/auth/profile', payload, {
-        //headers: { Authorization: `Bearer ${user?.token}` },
+       // headers: { Authorization: `Bearer ${user?.token}` },
       });
 
       setMessage('Cập nhật thông tin thành công!');
@@ -86,10 +86,9 @@ export default function UserProfile() {
           <label className="block mb-1 font-semibold">Email</label>
           <input
             type="email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            className="w-full border p-3 rounded"
-            placeholder="Email"
+            disabled
+            value={profile.email}
+            className="w-full border p-3 rounded bg-gray-100"
           />
         </div>
 
@@ -128,3 +127,4 @@ export default function UserProfile() {
     </div>
   );
 }
+

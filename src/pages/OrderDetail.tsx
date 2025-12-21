@@ -188,7 +188,7 @@ export default function OrderDetail() {
                   onClick={() => openReviewModal(item)}
                   className="mt-2 px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
                 >
-                  Quản lý đánh giá
+                  Đánh giá sản phẩm
                 </button>
               )}
             </div>
