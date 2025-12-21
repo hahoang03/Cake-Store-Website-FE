@@ -16,7 +16,7 @@ interface AuthContextType {
   profile: UserProfile | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<boolean>
-  signUp: (name: string, email: string, password: string) => Promise<boolean>
+  signUp: (name: string, email: string, password: string) => Promise<{ success: boolean; message?: string }>
   signOut: () => void
 }
 
@@ -76,19 +76,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   // REGISTER
-  const signUp = async (name: string, email: string, password: string) => {
-    try {
-      await api.post('/api/auth/register', {
-        name,
-        email,
-        password,
-      })
-      return true
-    } catch (err) {
-      console.error('Register failed', err)
-      return false
+const signUp = async (name: string, email: string, password: string) => {
+  try {
+    await api.post('/api/auth/register', {
+      name,
+      email,
+      password,
+    })
+
+    return { success: true }
+  } catch (err: any) {
+    const message =
+      err?.response?.data?.error || 'Đăng ký thất bại'
+
+    return {
+      success: false,
+      message,
     }
   }
+}
 
   const signOut = () => {
     localStorage.removeItem('token')

@@ -20,10 +20,8 @@ export default function Login() {
       const success = await signIn(email, password)
       if (!success) {
         setError('Email hoặc mật khẩu không đúng')
-        setLoading(false)
         return
       }
-      // Login thành công, sẽ redirect trong useEffect
     } catch {
       setError('Đã xảy ra lỗi. Vui lòng thử lại.')
     } finally {
@@ -34,7 +32,6 @@ export default function Login() {
   useEffect(() => {
     if (!user || !profile) return
 
-    // Nếu admin -> /admin, user thường -> trang chủ
     if (profile.is_admin) {
       navigate('/admin', { replace: true })
     } else {
@@ -43,44 +40,77 @@ export default function Login() {
   }, [user, profile, navigate])
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4">
-      <div className="max-w-md w-full">
-        <div className="bg-white rounded-xl shadow-2xl p-8">
-          <h1 className="text-3xl font-bold text-center mb-6">Đăng nhập</h1>
+    <div className="min-h-[80vh] flex items-center justify-center px-4 bg-gradient-to-br from-[#eef3ea] to-white">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+          {/* Title */}
+          <h1 className="text-3xl font-bold text-center text-[#3E5D2A] mb-2">
+            Đăng nhập
+          </h1>
+          <p className="text-center text-gray-500 mb-6 text-sm">
+            Chào mừng bạn quay lại 
+          </p>
 
-          {error && <div className="mb-4 text-red-600 text-sm">{error}</div>}
+          {error && (
+            <div className="mb-4 rounded-lg bg-red-50 text-red-600 px-4 py-2 text-sm border border-red-200">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              className="w-full border p-3 rounded"
-            />
-            <input
-              type="password"
-              placeholder="Mật khẩu"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              className="w-full border p-3 rounded"
-            />
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3E5D2A] focus:border-transparent transition"
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Mật khẩu
+              </label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#3E5D2A] focus:border-transparent transition"
+              />
+            </div>
+
+            {/* Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#3E5D2A] text-white py-3 rounded font-bold"
+              className="w-full bg-[#3E5D2A] hover:bg-[#2f4a22] text-white py-3 rounded-xl font-bold transition disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {loading ? 'Đang đăng nhập...' : 'ĐĂNG NHẬP'}
             </button>
           </form>
 
-          <div className="mt-6 text-center space-y-2">
-            <Link to="/" className="text-[#3E5D2A] font-semibold block">
+          {/* Links */}
+          <div className="mt-6 text-center space-y-2 text-sm">
+            <Link
+              to="/"
+              className="block text-gray-500 hover:text-[#3E5D2A] transition"
+            >
               ← Quay lại trang chủ
             </Link>
-            <Link to="/signup" className="text-[#3E5D2A] font-semibold block">
+
+            <Link
+              to="/signup"
+              className="block text-[#3E5D2A] font-semibold hover:underline"
+            >
               Chưa có tài khoản? Đăng ký
             </Link>
           </div>

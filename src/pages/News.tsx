@@ -52,7 +52,7 @@ export default function News() {
               Workshop làm bánh miễn phí cho khách hàng thân thiết
             </h2>
             <p className="text-gray-700 leading-relaxed">
-              Tham gia workshop làm bánh cùng các đầu bếp chuyên nghiệp của Cái Lò Nướng.
+              Tham gia workshop làm bánh cùng các đầu bếp chuyên nghiệp của H&T
               Dành riêng cho khách hàng thân thiết cấp Vàng và Kim cương.
             </p>
           </div>

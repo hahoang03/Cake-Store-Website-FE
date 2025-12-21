@@ -1,133 +1,177 @@
-import { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { api } from '../lib/api';
+import { useEffect, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { api } from '../lib/api'
 
 interface Product {
-  id: string;
-  name: string;
-  image: string;
-  price: number;
-  category_id: string;
+  id: string
+  name: string
+  image: string
+  price: number
+  category_id: string
 }
 
 interface Category {
-  id: string;
-  name: string;
+  id: string
+  name: string
 }
 
 export default function ProductList() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [categoryName, setCategoryName] = useState('Tất cả sản phẩm');
+  const [products, setProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [categoryName, setCategoryName] = useState('Tất cả sản phẩm')
+  const [animate, setAnimate] = useState(false)
 
-  const [searchParams] = useSearchParams();
-  const categoryId = searchParams.get('category');
+  const [searchParams] = useSearchParams()
+  const categoryId = searchParams.get('category')
 
-  // Load categories
+  /* =======================
+      LOAD CATEGORIES
+  ======================= */
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await api.get('/api/categories');
-        setCategories(res.data.data || []);
+        const res = await api.get('/api/categories')
+        setCategories(res.data.data || [])
       } catch (err) {
-        console.error(err);
+        console.error(err)
       }
-    };
-    fetchCategories();
-  }, []);
+    }
+    fetchCategories()
+  }, [])
 
-  // Load products theo category
+  /* =======================
+      LOAD PRODUCTS
+  ======================= */
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        setLoading(true);
-        let res;
+        setLoading(true)
+        setAnimate(false)
+
+        let allProducts: Product[] = []
 
         if (categoryId) {
-          // fetch products theo category
-          res = await api.get(`/api/categories/${categoryId}/products`);
-          const cat = categories.find((c) => c.id === categoryId);
-          setCategoryName(cat ? cat.name : 'Danh mục không xác định');
+          const res = await api.get(`/api/categories/${categoryId}/products`)
+          allProducts = res.data.data || []
+
+          const cat = categories.find((c) => c.id === categoryId)
+          setCategoryName(cat ? cat.name : 'Danh mục')
         } else {
-          // fetch tất cả products
-          let allProducts: Product[] = [];
           for (const c of categories) {
-            const r = await api.get(`/api/categories/${c.id}/products`);
-            allProducts = allProducts.concat(r.data.data || []);
+            const r = await api.get(`/api/categories/${c.id}/products`)
+            allProducts = allProducts.concat(r.data.data || [])
           }
-          res = { data: { data: allProducts } };
-          setCategoryName('Tất cả sản phẩm');
+          setCategoryName('Tất cả sản phẩm')
         }
 
-        setProducts(res.data.data || []);
+        setProducts(allProducts)
+
+        // trigger animation
+        setTimeout(() => setAnimate(true), 50)
       } catch (err) {
-        console.error(err);
-        setProducts([]);
+        console.error(err)
+        setProducts([])
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
     if (categories.length > 0 || !categoryId) {
-      fetchProducts();
+      fetchProducts()
     }
-  }, [categoryId, categories]);
+  }, [categoryId, categories])
 
   const filteredProducts = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  )
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12">
-      {/* Breadcrumb */}
-      <nav className="text-gray-500 text-sm mb-4">
-        <Link to="/">Trang chủ</Link> / <span>{categoryName}</span>
-      </nav>
+    <div className="max-w-7xl mx-auto px-4 py-10 bg-gradient-to-br from-[#eef3ea] to-white">
+      {/* ================= HERO ================= */}
+      {/* ================= HERO ================= */}
+      <div className="relative w-full h-[300px] md:h-[420px] mb-12 rounded-2xl overflow-hidden animate-fadeIn">
+        <img
+          src="https://cailonuong.com/wp-content/uploads/2025/11/COVER-WEB-2.png"
+          alt="Danh mục sản phẩm"
+          className="w-full h-full object-cover"
+        />
 
-      {/* Search */}
-      <div className="mb-6 w-full">
+        {/* Overlay + Category name (chỉ hiện khi có category) */}
+        {categoryId && (
+          <>
+            {/* Overlay */}
+            <div className="absolute inset-0 bg-black/40" />
+
+            {/* Text */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <h1 className="text-white text-3xl md:text-5xl font-bold tracking-wide drop-shadow-lg text-center px-4">
+                {categoryName}
+              </h1>
+            </div>
+          </>
+        )}
+      </div>
+
+
+      {/* ================= SEARCH ================= */}
+      <div className="mb-10">
         <input
           type="text"
           placeholder="Tìm kiếm sản phẩm..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+          className="w-full border rounded-xl px-5 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400 shadow-sm"
         />
       </div>
 
-      {/* Products */}
+      {/* ================= PRODUCTS ================= */}
       {loading ? (
-        <p className="text-center py-20">Đang tải...</p>
+        <p className="text-center py-20 text-gray-500">Đang tải sản phẩm...</p>
       ) : filteredProducts.length === 0 ? (
-        <p className="text-center py-20">Không có sản phẩm nào</p>
+        <p className="text-center py-20 text-gray-500">Không có sản phẩm nào</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredProducts.map((p) => (
+        <div
+          className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 transition-all duration-700 ${animate ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+            }`}
+        >
+          {filteredProducts.map((p, index) => (
             <Link
               key={p.id}
               to={`/product/${p.id}`}
-              className="group bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden"
+              style={{ transitionDelay: `${index * 80}ms` }}
+              className="group bg-white rounded-2xl shadow-sm hover:shadow-2xl overflow-hidden transform transition-all duration-500 hover:-translate-y-2"
             >
+              {/* Image */}
               <div className="aspect-square bg-gray-100 overflow-hidden">
                 <img
                   src={p.image}
                   alt={p.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
               </div>
-              <div className="p-4">
-                <h2 className="text-lg font-semibold mb-2">{p.name}</h2>
-                <p className="text-orange-500 font-bold">
+
+              {/* Content */}
+              <div className="p-6 text-center">
+                <h2 className="text-lg font-semibold mb-3 line-clamp-2 min-h-[3rem]">
+                  {p.name}
+                </h2>
+
+                <p className="text-orange-500 font-bold text-xl">
                   {p.price.toLocaleString('vi-VN')} ₫
                 </p>
+
+                <div className="mt-5">
+                  <span className="inline-block px-5 py-2 text-sm rounded-full bg-orange-100 text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition">
+                    Xem chi tiết
+                  </span>
+                </div>
               </div>
             </Link>
           ))}
         </div>
       )}
     </div>
-  );
+  )
 }
-
