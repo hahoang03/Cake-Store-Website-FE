@@ -94,7 +94,9 @@ export default function ProductDetail() {
             {product.price.toLocaleString('vi-VN')} ₫
           </p>
 
-          <p><strong>Mô tả:</strong> {product.description}</p>
+          <p className="whitespace-pre-line">
+            <strong>Mô tả:</strong> {product.description}
+          </p>
           <p><strong>Thương hiệu:</strong> {product.brand || 'Không có'}</p>
           <p><strong>Số lượng:</strong> {product.count_in_stock}</p>
 
@@ -116,7 +118,7 @@ export default function ProductDetail() {
               }
               className="border p-2"
             >
-              <Plus size={16} />
+              <Plus size={16} /> 
             </button>
           </div>
 
@@ -128,7 +130,7 @@ export default function ProductDetail() {
           </button>
         </div>
       </div>
-
+            
 
       {/* REVIEWS */}
       <div>
@@ -159,3 +161,4 @@ export default function ProductDetail() {
     </div>
   )
 }
+

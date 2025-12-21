@@ -17,7 +17,7 @@ import Signup from './pages/Signup'
 import AdminRoute from './routes/AdminRoute';
 import OrderTracking from './pages/OrderTracking'
 import OrderDetail from './pages/OrderDetail';
-
+import UserProfile from './pages/UserProfile'
 
 function App() {
   return (
@@ -41,6 +41,7 @@ function App() {
                 <Route path="/my-orders" element={<OrderTracking />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/orders/:id" element={<OrderDetail />} />
+                 <Route path="//user-profile" element={<UserProfile />} />
                 <Route
   path="/admin"
   element={
@@ -61,3 +62,4 @@ function App() {
 }
 
 export default App;
+

@@ -210,14 +210,18 @@ export default function ProductsManager() {
             <label className="block mb-2">
               Giá:
               <input
-                type="number"
-                value={creatingProduct.price ?? 0}
-                onChange={(e) =>
-                  setCreatingProduct((prev) => ({
-                    ...prev,
-                    price: Number(e.target.value),
-                  }))
-                }
+                type="text"
+                value={creatingProduct.price ?? ''}
+                onChange={(e) => {
+                  const val = e.target.value
+                  // Chỉ cho phép các ký tự số
+                  if (/^\d*$/.test(val)) {
+                    setCreatingProduct(prev => ({
+                      ...prev,
+                      price: val === '' ? undefined : Number(val)
+                    }))
+                  }
+                }}
                 className="border p-1 rounded w-full"
               />
             </label>
@@ -236,17 +240,21 @@ export default function ProductsManager() {
 
             <label className="block mb-2">
               Số lượng:
-              <input
-                type="number"
-                value={creatingProduct.count_in_stock ?? 0}
-                onChange={(e) =>
-                  setCreatingProduct((prev) => ({
-                    ...prev,
-                    count_in_stock: Number(e.target.value),
-                  }))
-                }
-                className="border p-1 rounded w-full"
-              />
+               <input
+    type="text"
+    value={creatingProduct.count_in_stock ?? ''}
+    onChange={(e) => {
+      const val = e.target.value
+      // Chỉ cho phép ký tự số
+      if (/^\d*$/.test(val)) {
+        setCreatingProduct(prev => ({
+          ...prev,
+          count_in_stock: val === '' ? undefined : Number(val)
+        }))
+      }
+    }}
+    className="border p-1 rounded w-full"
+  />
             </label>
 
             <label className="block mb-2">
@@ -299,127 +307,133 @@ export default function ProductsManager() {
       )}
 
       {/* --- Modal Edit --- */}
-      {editingProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-20 z-50">
-          <div className="bg-white p-6 rounded w-96 max-h-[90vh] overflow-y-auto shadow-lg">
-            <h3 className="text-xl font-bold mb-4">Sửa sản phẩm</h3>
+      {/* --- Modal Edit --- */}
+{editingProduct && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-20 z-50">
+    <div className="bg-white p-6 rounded w-96 max-h-[90vh] overflow-y-auto shadow-lg">
+      <h3 className="text-xl font-bold mb-4">Sửa sản phẩm</h3>
 
-            <label className="block mb-2">
-              Tên:
-              <input
-                type="text"
-                value={editingProduct.name || ''}
-                onChange={(e) =>
-                  setEditingProduct((prev) => ({ ...prev, name: e.target.value }))
-                }
-                className="border p-1 rounded w-full"
-              />
-            </label>
+      <label className="block mb-2">
+        Tên:
+        <input
+          type="text"
+          value={editingProduct.name || ''}
+          onChange={(e) =>
+            setEditingProduct(prev => ({ ...prev, name: e.target.value }))
+          }
+          className="border p-1 rounded w-full"
+        />
+      </label>
 
-            <label className="block mb-2">
-              Thương hiệu:
-              <input
-                type="text"
-                value={editingProduct.brand || ''}
-                onChange={(e) =>
-                  setEditingProduct((prev) => ({ ...prev, brand: e.target.value }))
-                }
-                className="border p-1 rounded w-full"
-              />
-            </label>
+      <label className="block mb-2">
+        Thương hiệu:
+        <input
+          type="text"
+          value={editingProduct.brand || ''}
+          onChange={(e) =>
+            setEditingProduct(prev => ({ ...prev, brand: e.target.value }))
+          }
+          className="border p-1 rounded w-full"
+        />
+      </label>
 
-            <label className="block mb-2">
-              Giá:
-              <input
-                type="number"
-                value={editingProduct.price ?? 0}
-                onChange={(e) =>
-                  setEditingProduct((prev) => ({
-                    ...prev,
-                    price: Number(e.target.value),
-                  }))
-                }
-                className="border p-1 rounded w-full"
-              />
-            </label>
+      <label className="block mb-2">
+        Giá:
+        <input
+          type="text"
+          value={editingProduct.price ?? ''}
+          onChange={e => {
+            const val = e.target.value
+            if (/^\d*$/.test(val)) {
+              setEditingProduct(prev => ({
+                ...prev,
+                price: val === '' ? undefined : Number(val)
+              }))
+            }
+          }}
+          className="border p-1 rounded w-full"
+        />
+      </label>
 
-            <label className="block mb-2">
-              Hình ảnh URL:
-              <input
-                type="text"
-                value={editingProduct.image || ''}
-                onChange={(e) =>
-                  setEditingProduct((prev) => ({ ...prev, image: e.target.value }))
-                }
-                className="border p-1 rounded w-full"
-              />
-            </label>
+      <label className="block mb-2">
+        Hình ảnh URL:
+        <input
+          type="text"
+          value={editingProduct.image || ''}
+          onChange={e =>
+            setEditingProduct(prev => ({ ...prev, image: e.target.value }))
+          }
+          className="border p-1 rounded w-full"
+        />
+      </label>
 
-            <label className="block mb-2">
-              Số lượng:
-              <input
-                type="number"
-                value={editingProduct.count_in_stock ?? 0}
-                onChange={(e) =>
-                  setEditingProduct((prev) => ({
-                    ...prev,
-                    count_in_stock: Number(e.target.value),
-                  }))
-                }
-                className="border p-1 rounded w-full"
-              />
-            </label>
+      <label className="block mb-2">
+        Số lượng:
+        <input
+          type="text"
+          value={editingProduct.count_in_stock ?? ''}
+          onChange={e => {
+            const val = e.target.value
+            if (/^\d*$/.test(val)) {
+              setEditingProduct(prev => ({
+                ...prev,
+                count_in_stock: val === '' ? undefined : Number(val)
+              }))
+            }
+          }}
+          className="border p-1 rounded w-full"
+        />
+      </label>
 
-            <label className="block mb-2">
-              Mô tả:
-              <textarea
-                value={editingProduct.description || ''}
-                onChange={(e) =>
-                  setEditingProduct((prev) => ({ ...prev, description: e.target.value }))
-                }
-                className="border p-1 rounded w-full"
-                rows={5}
-              />
-            </label>
+      <label className="block mb-2">
+        Mô tả:
+        <textarea
+          value={editingProduct.description || ''}
+          onChange={e =>
+            setEditingProduct(prev => ({ ...prev, description: e.target.value }))
+          }
+          className="border p-1 rounded w-full"
+          rows={5}
+        />
+      </label>
 
-            <label className="block mb-4">
-              Danh mục:
-              <select
-                value={editingProduct.category_id || ''}
-                onChange={(e) =>
-                  setEditingProduct((prev) => ({ ...prev, category_id: e.target.value }))
-                }
-                className="border p-1 rounded w-full"
-              >
-                <option value="">-- Chọn danh mục --</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+      <label className="block mb-4">
+        Danh mục:
+        <select
+          value={editingProduct.category_id || ''}
+          onChange={e =>
+            setEditingProduct(prev => ({ ...prev, category_id: e.target.value }))
+          }
+          className="border p-1 rounded w-full"
+        >
+          <option value="">-- Chọn danh mục --</option>
+          {categories.map(c => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
+      </label>
 
-            <div className="flex justify-end gap-2">
-              <button
-                className="px-4 py-2 bg-gray-300 rounded"
-                onClick={() => setEditingProduct(null)}
-              >
-                Hủy
-              </button>
-              <button
-                className="px-4 py-2 bg-green-500 text-white rounded"
-                onClick={() =>
-                  editingProduct.id && updateProduct(editingProduct.id, editingProduct)
-                }
-                disabled={saving}
-              >
-                {saving ? 'Đang lưu...' : 'Lưu'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <div className="flex justify-end gap-2">
+        <button
+          className="px-4 py-2 bg-gray-300 rounded"
+          onClick={() => setEditingProduct(null)}
+        >
+          Hủy
+        </button>
+        <button
+          className="px-4 py-2 bg-green-500 text-white rounded"
+          onClick={() =>
+            editingProduct.id && updateProduct(editingProduct.id, editingProduct)
+          }
+          disabled={saving}
+        >
+          {saving ? 'Đang lưu...' : 'Lưu'}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   )
 }
+
