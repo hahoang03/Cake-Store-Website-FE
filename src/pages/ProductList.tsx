@@ -8,6 +8,7 @@ interface Product {
   image: string
   price: number
   category_id: string
+  count_in_stock: number // ✅ thêm count_in_stock
 }
 
 interface Category {
@@ -90,7 +91,6 @@ export default function ProductList() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-10 bg-gradient-to-br from-[#eef3ea] to-white">
       {/* ================= HERO ================= */}
-      {/* ================= HERO ================= */}
       <div className="relative w-full h-[300px] md:h-[420px] mb-12 rounded-2xl overflow-hidden animate-fadeIn">
         <img
           src="https://cailonuong.com/wp-content/uploads/2025/11/COVER-WEB-2.png"
@@ -101,10 +101,7 @@ export default function ProductList() {
         {/* Overlay + Category name (chỉ hiện khi có category) */}
         {categoryId && (
           <>
-            {/* Overlay */}
             <div className="absolute inset-0 bg-black/40" />
-
-            {/* Text */}
             <div className="absolute inset-0 flex items-center justify-center">
               <h1 className="text-white text-3xl md:text-5xl font-bold tracking-wide drop-shadow-lg text-center px-4">
                 {categoryName}
@@ -113,7 +110,6 @@ export default function ProductList() {
           </>
         )}
       </div>
-
 
       {/* ================= SEARCH ================= */}
       <div className="mb-10">
@@ -163,8 +159,13 @@ export default function ProductList() {
                 </p>
 
                 <div className="mt-5">
-                  <span className="inline-block px-5 py-2 text-sm rounded-full bg-orange-100 text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition">
-                    Xem chi tiết
+                  <span
+                    className={`inline-block px-5 py-2 text-sm rounded-full transition
+                    ${p.count_in_stock > 0 
+                      ? 'bg-orange-100 text-orange-600 group-hover:bg-orange-500 group-hover:text-white' 
+                      : 'bg-gray-300 text-gray-600'}`}
+                  >
+                    {p.count_in_stock > 0 ? 'Xem chi tiết' : 'Tạm thời hết hàng'}
                   </span>
                 </div>
               </div>

@@ -71,6 +71,16 @@ export default function ProductsManager() {
   const createProduct = async (product: Partial<Product>) => {
     try {
       setSaving(true)
+      const payload = {
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        brand: product.brand,
+        category_id: product.category_id,
+        count_in_stock: product.count_in_stock,
+        description: product.description,
+        is_active: product.is_active,
+      }
       if (!product.name || product.price == null || !product.category_id) {
         alert('Tên, giá và danh mục là bắt buộc.')
         return
@@ -80,7 +90,6 @@ export default function ProductsManager() {
         const newProduct = {
           ...res.data.data,
           categories: categories.find(c => c.id === res.data.data.category_id),
-          sold_qty: 0
         }
         setProducts(prev => [...prev, newProduct])
       }
@@ -127,13 +136,27 @@ export default function ProductsManager() {
   const deleteProduct = async (id: string) => {
     if (!confirm('Bạn có chắc muốn xóa sản phẩm này?')) return
     try {
-      await api.delete(`/api/products/${id}`)
-      setProducts(prev => prev.filter(p => p.id !== id))
+      const res = await api.delete(`/api/products/${id}`)
+
+      if (res.data?.deleted) {
+        // Hard delete → remove khỏi state
+        setProducts(prev => prev.filter(p => p.id !== id))
+      } else if (res.data?.soft_deleted) {
+        // Soft delete → đánh dấu inactive
+        setProducts(prev =>
+          prev.map(p =>
+            p.id === id ? { ...p, is_active: false } : p
+          )
+        )
+      }
+
+      alert(res.data?.message || 'Xóa sản phẩm thành công.')
     } catch (err) {
       console.error(`Delete product ${id} error:`, err)
       alert('Xóa thất bại.')
     }
   }
+
 
   const toggleActive = async (id: string, currentValue: boolean) => {
     try {
@@ -194,14 +217,34 @@ export default function ProductsManager() {
               <td className="p-2">{p.sold_qty ?? 0}</td>
               <td className="p-2">{p.categories?.name || '-'}</td>
               <td className="p-2" style={{ whiteSpace: 'pre-line' }}>{p.description}</td>
+
+
               <td className="p-2 flex gap-2">
-                <button className="text-blue-500" onClick={() => setEditingProduct({ ...p })}>Sửa</button>
-                {p.sold_qty === 0 && (
-                  <button className="text-red-500" onClick={() => deleteProduct(p.id)}>Xóa</button>
-                )}
-                <button className="text-yellow-500" onClick={() => toggleActive(p.id, p.is_active)}>
-                  {p.is_active ? 'Ẩn' : 'Hiện'}
+                <button className="text-blue-500" onClick={() => setEditingProduct({ ...p })}>
+                  Sửa
                 </button>
+
+                {/* Chỉ hiện nút Xóa khi is_active và sold_qty === 0 */}
+                {p.is_active && p.sold_qty === 0 && (
+                  <button className="text-red-500" onClick={() => deleteProduct(p.id)}>
+                    Xóa
+                  </button>
+                  
+                )}
+
+                {/* Luôn hiện nút Ẩn */}
+                {p.is_active && (
+                  <button className="text-yellow-500" onClick={() => toggleActive(p.id, p.is_active)}>
+                    Ẩn
+                  </button>
+                )}
+
+                {/* Nếu sản phẩm đã inactive thì nút Hiện */}
+                {!p.is_active && (
+                  <button className="text-yellow-500" onClick={() => toggleActive(p.id, p.is_active)}>
+                    Hiện
+                  </button>
+                )}
               </td>
             </tr>
           ))}
@@ -220,7 +263,6 @@ export default function ProductsManager() {
             count_in_stock: 0,
             description: '',
             is_active: true,
-            sold_qty: 0,
           })
         }
       >
@@ -289,7 +331,7 @@ export default function ProductsManager() {
 
             <label className="block mb-2">
               Số lượng:
-               <input
+              <input
                 type="text"
                 value={creatingProduct.count_in_stock ?? ''}
                 onChange={(e) => {

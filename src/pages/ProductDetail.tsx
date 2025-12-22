@@ -179,6 +179,7 @@ export default function ProductDetail() {
             <button
               onClick={() => setQuantity(q => Math.max(1, q - 1))}
               className="w-10 h-10 border rounded-lg flex items-center justify-center hover:bg-gray-100"
+              disabled={product.count_in_stock === 0}
             >
               <Minus size={16} />
             </button>
@@ -187,22 +188,46 @@ export default function ProductDetail() {
 
             <button
               onClick={() =>
-                setQuantity(q =>
-                  Math.min(product.count_in_stock, q + 1)
-                )
+                setQuantity(q => Math.min(product.count_in_stock, q + 1))
               }
               className="w-10 h-10 border rounded-lg flex items-center justify-center hover:bg-gray-100"
+              disabled={product.count_in_stock === 0}
             >
               <Plus size={16} />
             </button>
           </div>
 
           <button
-            onClick={handleAddToCart}
-            className="w-full bg-orange-500 hover:bg-orange-600 transition text-white py-4 rounded-xl font-bold text-lg"
+            onClick={() => {
+              if (!user) {
+                navigate('/login', { state: { redirect: `/product/${id}` } })
+                return
+              }
+
+              if (!product) return
+
+              if (product.count_in_stock === 0) {
+                alert('Tạm thời hết hàng')
+                return
+              }
+
+              addToCart({
+                productId: product.id,
+                productName: product.name,
+                productImage: product.image,
+                price: product.price,
+                quantity,
+              })
+            }}
+            disabled={product.count_in_stock === 0}
+            className={`w-full py-4 rounded-xl font-bold text-lg transition ${product.count_in_stock === 0
+                ? 'bg-gray-300 text-gray-700 cursor-not-allowed'
+                : 'bg-orange-500 hover:bg-orange-600 text-white'
+              }`}
           >
-            Thêm vào giỏ hàng
+            {product.count_in_stock === 0 ? 'Tạm thời hết hàng' : 'Thêm vào giỏ hàng'}
           </button>
+
         </div>
       </div>
 
