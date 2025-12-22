@@ -33,6 +33,7 @@ type Order = {
 export default function OrdersManager() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
 
   useEffect(() => {
     fetchOrders()
@@ -50,6 +51,19 @@ export default function OrdersManager() {
     }
   }
 
+  const fetchOrderDetail = async (id: string) => {
+    try {
+      const res = await api.get(`/api/orders/${id}`)
+      setSelectedOrder(res.data.data)
+    } catch (err) {
+      console.error('Load order detail error:', err)
+      setSelectedOrder(null)
+      alert('Không thể tải chi tiết đơn hàng')
+    }
+  }
+
+  const closeDetail = () => setSelectedOrder(null)
+
   const markPaid = async (id: string, payment_method: string) => {
     try {
       const res = await api.put(`/api/orders/${id}/pay`, { payment_method })
@@ -58,6 +72,9 @@ export default function OrdersManager() {
           o.id === id ? { ...o, is_paid: true, paid_at: res.data.data.paid_at } : o
         )
       )
+      if (selectedOrder?.id === id) {
+        setSelectedOrder({ ...selectedOrder, is_paid: true, paid_at: res.data.data.paid_at })
+      }
     } catch (err) {
       console.error('Mark paid error:', err)
     }
@@ -71,6 +88,9 @@ export default function OrdersManager() {
           o.id === id ? { ...o, is_delivered: true, delivered_at: res.data.data.delivered_at } : o
         )
       )
+      if (selectedOrder?.id === id) {
+        setSelectedOrder({ ...selectedOrder, is_delivered: true, delivered_at: res.data.data.delivered_at })
+      }
     } catch (err) {
       console.error('Mark delivered error:', err)
     }
@@ -97,7 +117,12 @@ export default function OrdersManager() {
         <tbody>
           {orders.map((o) => (
             <tr key={o.id} className="border-t">
-              <td className="p-2">{o.id}</td>
+              <td
+                className="p-2 text-blue-600 cursor-pointer"
+                onClick={() => fetchOrderDetail(o.id)}
+              >
+                {o.id}
+              </td>
               <td className="p-2">{o.users?.name || 'Khách'}</td>
               <td className="p-2">{o.total_price.toLocaleString()} ₫</td>
               <td className="p-2">{o.is_paid ? `Đã thanh toán (${o.payment_method})` : 'Chưa thanh toán'}</td>
@@ -125,6 +150,46 @@ export default function OrdersManager() {
           ))}
         </tbody>
       </table>
+
+      {/* Modal chi tiết đơn */}
+      {selectedOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-10 z-50">
+          <div className="bg-white p-6 rounded w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-lg">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">Chi tiết đơn: {selectedOrder.id}</h3>
+              <button
+                onClick={closeDetail}
+                className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400"
+              >
+                Đóng
+              </button>
+            </div>
+
+            <div className="border rounded p-4 mb-6">
+              <p><span className="font-semibold">Người đặt:</span> {selectedOrder.users?.name || 'Khách'}</p>
+              <p><span className="font-semibold">Tổng tiền:</span> {selectedOrder.total_price.toLocaleString()}₫</p>
+              <p><span className="font-semibold">Thanh toán:</span> {selectedOrder.is_paid ? `Đã thanh toán (${selectedOrder.paid_at})` : 'Chưa thanh toán'}</p>
+              <p><span className="font-semibold">Giao hàng:</span> {selectedOrder.is_delivered ? `Đã giao (${selectedOrder.delivered_at})` : 'Chưa giao'}</p>
+              <p><span className="font-semibold">Địa chỉ:</span> {selectedOrder.shipping_address}</p>
+            </div>
+
+            <h4 className="text-lg font-bold mb-2">Sản phẩm trong đơn</h4>
+            <div className="space-y-4">
+              {selectedOrder.order_items?.map((item) => (
+                <div key={item.id} className="flex flex-col md:flex-row items-start md:items-center border rounded p-4 gap-4">
+                  <img src={item.image} alt={item.name} className="w-24 h-24 object-cover rounded" />
+                  <div className="flex-1">
+                    <p className="font-semibold">{item.name}</p>
+                    <p>Số lượng: {item.qty}</p>
+                    <p>Giá: {item.price.toLocaleString('vi-VN')}₫</p>
+                    <p>Tổng: {(item.qty * item.price).toLocaleString('vi-VN')}₫</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -16,6 +16,8 @@ type Product = {
   category_id: string
   count_in_stock: number
   description: string
+  sold_qty: number
+  is_active: boolean
   categories?: Category
 }
 
@@ -27,22 +29,17 @@ export default function ProductsManager() {
   const [editingProduct, setEditingProduct] = useState<Partial<Product> | null>(null)
   const [creatingProduct, setCreatingProduct] = useState<Partial<Product> | null>(null)
 
+  // Load categories trước
   useEffect(() => {
-    fetchProducts()
     fetchCategories()
   }, [])
 
-  const fetchProducts = async () => {
-    try {
-      const res = await api.get('/api/products')
-      setProducts(res.data.data || [])
-    } catch (err) {
-      console.error('Load products error:', err)
-      setProducts([])
-    } finally {
-      setLoading(false)
+  // Khi categories đã load xong, fetch products và map category
+  useEffect(() => {
+    if (categories.length) {
+      fetchProducts()
     }
-  }
+  }, [categories])
 
   const fetchCategories = async () => {
     try {
@@ -54,6 +51,23 @@ export default function ProductsManager() {
     }
   }
 
+  const fetchProducts = async () => {
+    try {
+      const res = await api.get('/api/products')
+      const productsData: Product[] = res.data.data || []
+      const productsWithCategory = productsData.map(p => ({
+        ...p,
+        categories: categories.find(c => c.id === p.category_id)
+      }))
+      setProducts(productsWithCategory)
+    } catch (err) {
+      console.error('Load products error:', err)
+      setProducts([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const createProduct = async (product: Partial<Product>) => {
     try {
       setSaving(true)
@@ -62,7 +76,14 @@ export default function ProductsManager() {
         return
       }
       const res = await api.post('/api/products', product)
-      if (res.data && res.data.data) setProducts((prev) => [...prev, res.data.data])
+      if (res.data && res.data.data) {
+        const newProduct = {
+          ...res.data.data,
+          categories: categories.find(c => c.id === res.data.data.category_id),
+          sold_qty: 0
+        }
+        setProducts(prev => [...prev, newProduct])
+      }
       setCreatingProduct(null)
     } catch (err) {
       console.error('Create product error:', err)
@@ -83,10 +104,16 @@ export default function ProductsManager() {
         category_id: product.category_id,
         count_in_stock: product.count_in_stock,
         description: product.description,
+        is_active: product.is_active,
       }
       const res = await api.put(`/api/products/${id}`, payload)
       if (res.data && res.data.data) {
-        setProducts((prev) => prev.map((p) => (p.id === id ? res.data.data : p)))
+        const updatedProduct = {
+          ...res.data.data,
+          categories: categories.find(c => c.id === res.data.data.category_id),
+          sold_qty: products.find(p => p.id === id)?.sold_qty ?? 0
+        }
+        setProducts(prev => prev.map(p => (p.id === id ? updatedProduct : p)))
         setEditingProduct(null)
       }
     } catch (err) {
@@ -101,10 +128,30 @@ export default function ProductsManager() {
     if (!confirm('Bạn có chắc muốn xóa sản phẩm này?')) return
     try {
       await api.delete(`/api/products/${id}`)
-      setProducts((prev) => prev.filter((p) => p.id !== id))
+      setProducts(prev => prev.filter(p => p.id !== id))
     } catch (err) {
       console.error(`Delete product ${id} error:`, err)
       alert('Xóa thất bại.')
+    }
+  }
+
+  const toggleActive = async (id: string, currentValue: boolean) => {
+    try {
+      setSaving(true)
+      const res = await api.put(`/api/products/${id}`, { is_active: !currentValue })
+      if (res.data && res.data.data) {
+        const updatedProduct = {
+          ...res.data.data,
+          categories: categories.find(c => c.id === res.data.data.category_id),
+          sold_qty: products.find(p => p.id === id)?.sold_qty ?? 0
+        }
+        setProducts(prev => prev.map(p => (p.id === id ? updatedProduct : p)))
+      }
+    } catch (err) {
+      console.error(`Toggle active ${id} error:`, err)
+      alert('Cập nhật trạng thái thất bại.')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -122,13 +169,14 @@ export default function ProductsManager() {
             <th className="p-2 text-left">Thương hiệu</th>
             <th className="p-2 text-left">Giá</th>
             <th className="p-2 text-left">Số lượng</th>
+            <th className="p-2 text-left">Đã bán</th>
             <th className="p-2 text-left">Danh mục</th>
             <th className="p-2 text-left">Mô tả</th>
             <th className="p-2 text-left">Hành động</th>
           </tr>
         </thead>
         <tbody>
-          {products.map((p) => (
+          {products.map(p => (
             <tr key={p.id} className="border-t">
               <td className="p-2">
                 {p.image ? (
@@ -143,16 +191,16 @@ export default function ProductsManager() {
               <td className="p-2">{p.brand}</td>
               <td className="p-2">{p.price} ₫</td>
               <td className="p-2">{p.count_in_stock}</td>
+              <td className="p-2">{p.sold_qty ?? 0}</td>
               <td className="p-2">{p.categories?.name || '-'}</td>
-              <td className="p-2" style={{ whiteSpace: 'pre-line' }}>
-                {p.description}
-              </td>
+              <td className="p-2" style={{ whiteSpace: 'pre-line' }}>{p.description}</td>
               <td className="p-2 flex gap-2">
-                <button className="text-blue-500" onClick={() => setEditingProduct({ ...p })}>
-                  Sửa
-                </button>
-                <button className="text-red-500" onClick={() => deleteProduct(p.id)}>
-                  Xóa
+                <button className="text-blue-500" onClick={() => setEditingProduct({ ...p })}>Sửa</button>
+                {p.sold_qty === 0 && (
+                  <button className="text-red-500" onClick={() => deleteProduct(p.id)}>Xóa</button>
+                )}
+                <button className="text-yellow-500" onClick={() => toggleActive(p.id, p.is_active)}>
+                  {p.is_active ? 'Ẩn' : 'Hiện'}
                 </button>
               </td>
             </tr>
@@ -171,6 +219,8 @@ export default function ProductsManager() {
             category_id: '',
             count_in_stock: 0,
             description: '',
+            is_active: true,
+            sold_qty: 0,
           })
         }
       >
@@ -214,7 +264,6 @@ export default function ProductsManager() {
                 value={creatingProduct.price ?? ''}
                 onChange={(e) => {
                   const val = e.target.value
-                  // Chỉ cho phép các ký tự số
                   if (/^\d*$/.test(val)) {
                     setCreatingProduct(prev => ({
                       ...prev,
@@ -241,20 +290,19 @@ export default function ProductsManager() {
             <label className="block mb-2">
               Số lượng:
                <input
-    type="text"
-    value={creatingProduct.count_in_stock ?? ''}
-    onChange={(e) => {
-      const val = e.target.value
-      // Chỉ cho phép ký tự số
-      if (/^\d*$/.test(val)) {
-        setCreatingProduct(prev => ({
-          ...prev,
-          count_in_stock: val === '' ? undefined : Number(val)
-        }))
-      }
-    }}
-    className="border p-1 rounded w-full"
-  />
+                type="text"
+                value={creatingProduct.count_in_stock ?? ''}
+                onChange={(e) => {
+                  const val = e.target.value
+                  if (/^\d*$/.test(val)) {
+                    setCreatingProduct(prev => ({
+                      ...prev,
+                      count_in_stock: val === '' ? undefined : Number(val)
+                    }))
+                  }
+                }}
+                className="border p-1 rounded w-full"
+              />
             </label>
 
             <label className="block mb-2">
@@ -307,133 +355,131 @@ export default function ProductsManager() {
       )}
 
       {/* --- Modal Edit --- */}
-      {/* --- Modal Edit --- */}
-{editingProduct && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-20 z-50">
-    <div className="bg-white p-6 rounded w-96 max-h-[90vh] overflow-y-auto shadow-lg">
-      <h3 className="text-xl font-bold mb-4">Sửa sản phẩm</h3>
+      {editingProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-20 z-50">
+          <div className="bg-white p-6 rounded w-96 max-h-[90vh] overflow-y-auto shadow-lg">
+            <h3 className="text-xl font-bold mb-4">Sửa sản phẩm</h3>
 
-      <label className="block mb-2">
-        Tên:
-        <input
-          type="text"
-          value={editingProduct.name || ''}
-          onChange={(e) =>
-            setEditingProduct(prev => ({ ...prev, name: e.target.value }))
-          }
-          className="border p-1 rounded w-full"
-        />
-      </label>
+            <label className="block mb-2">
+              Tên:
+              <input
+                type="text"
+                value={editingProduct.name || ''}
+                onChange={(e) =>
+                  setEditingProduct(prev => ({ ...prev, name: e.target.value }))
+                }
+                className="border p-1 rounded w-full"
+              />
+            </label>
 
-      <label className="block mb-2">
-        Thương hiệu:
-        <input
-          type="text"
-          value={editingProduct.brand || ''}
-          onChange={(e) =>
-            setEditingProduct(prev => ({ ...prev, brand: e.target.value }))
-          }
-          className="border p-1 rounded w-full"
-        />
-      </label>
+            <label className="block mb-2">
+              Thương hiệu:
+              <input
+                type="text"
+                value={editingProduct.brand || ''}
+                onChange={(e) =>
+                  setEditingProduct(prev => ({ ...prev, brand: e.target.value }))
+                }
+                className="border p-1 rounded w-full"
+              />
+            </label>
 
-      <label className="block mb-2">
-        Giá:
-        <input
-          type="text"
-          value={editingProduct.price ?? ''}
-          onChange={e => {
-            const val = e.target.value
-            if (/^\d*$/.test(val)) {
-              setEditingProduct(prev => ({
-                ...prev,
-                price: val === '' ? undefined : Number(val)
-              }))
-            }
-          }}
-          className="border p-1 rounded w-full"
-        />
-      </label>
+            <label className="block mb-2">
+              Giá:
+              <input
+                type="text"
+                value={editingProduct.price ?? ''}
+                onChange={e => {
+                  const val = e.target.value
+                  if (/^\d*$/.test(val)) {
+                    setEditingProduct(prev => ({
+                      ...prev,
+                      price: val === '' ? undefined : Number(val)
+                    }))
+                  }
+                }}
+                className="border p-1 rounded w-full"
+              />
+            </label>
 
-      <label className="block mb-2">
-        Hình ảnh URL:
-        <input
-          type="text"
-          value={editingProduct.image || ''}
-          onChange={e =>
-            setEditingProduct(prev => ({ ...prev, image: e.target.value }))
-          }
-          className="border p-1 rounded w-full"
-        />
-      </label>
+            <label className="block mb-2">
+              Hình ảnh URL:
+              <input
+                type="text"
+                value={editingProduct.image || ''}
+                onChange={e =>
+                  setEditingProduct(prev => ({ ...prev, image: e.target.value }))
+                }
+                className="border p-1 rounded w-full"
+              />
+            </label>
 
-      <label className="block mb-2">
-        Số lượng:
-        <input
-          type="text"
-          value={editingProduct.count_in_stock ?? ''}
-          onChange={e => {
-            const val = e.target.value
-            if (/^\d*$/.test(val)) {
-              setEditingProduct(prev => ({
-                ...prev,
-                count_in_stock: val === '' ? undefined : Number(val)
-              }))
-            }
-          }}
-          className="border p-1 rounded w-full"
-        />
-      </label>
+            <label className="block mb-2">
+              Số lượng:
+              <input
+                type="text"
+                value={editingProduct.count_in_stock ?? ''}
+                onChange={e => {
+                  const val = e.target.value
+                  if (/^\d*$/.test(val)) {
+                    setEditingProduct(prev => ({
+                      ...prev,
+                      count_in_stock: val === '' ? undefined : Number(val)
+                    }))
+                  }
+                }}
+                className="border p-1 rounded w-full"
+              />
+            </label>
 
-      <label className="block mb-2">
-        Mô tả:
-        <textarea
-          value={editingProduct.description || ''}
-          onChange={e =>
-            setEditingProduct(prev => ({ ...prev, description: e.target.value }))
-          }
-          className="border p-1 rounded w-full"
-          rows={5}
-        />
-      </label>
+            <label className="block mb-2">
+              Mô tả:
+              <textarea
+                value={editingProduct.description || ''}
+                onChange={e =>
+                  setEditingProduct(prev => ({ ...prev, description: e.target.value }))
+                }
+                className="border p-1 rounded w-full"
+                rows={5}
+              />
+            </label>
 
-      <label className="block mb-4">
-        Danh mục:
-        <select
-          value={editingProduct.category_id || ''}
-          onChange={e =>
-            setEditingProduct(prev => ({ ...prev, category_id: e.target.value }))
-          }
-          className="border p-1 rounded w-full"
-        >
-          <option value="">-- Chọn danh mục --</option>
-          {categories.map(c => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
-      </label>
+            <label className="block mb-4">
+              Danh mục:
+              <select
+                value={editingProduct.category_id || ''}
+                onChange={e =>
+                  setEditingProduct(prev => ({ ...prev, category_id: e.target.value }))
+                }
+                className="border p-1 rounded w-full"
+              >
+                <option value="">-- Chọn danh mục --</option>
+                {categories.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </label>
 
-      <div className="flex justify-end gap-2">
-        <button
-          className="px-4 py-2 bg-gray-300 rounded"
-          onClick={() => setEditingProduct(null)}
-        >
-          Hủy
-        </button>
-        <button
-          className="px-4 py-2 bg-green-500 text-white rounded"
-          onClick={() =>
-            editingProduct.id && updateProduct(editingProduct.id, editingProduct)
-          }
-          disabled={saving}
-        >
-          {saving ? 'Đang lưu...' : 'Lưu'}
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+            <div className="flex justify-end gap-2">
+              <button
+                className="px-4 py-2 bg-gray-300 rounded"
+                onClick={() => setEditingProduct(null)}
+              >
+                Hủy
+              </button>
+              <button
+                className="px-4 py-2 bg-green-500 text-white rounded"
+                onClick={() =>
+                  editingProduct.id && updateProduct(editingProduct.id, editingProduct)
+                }
+                disabled={saving}
+              >
+                {saving ? 'Đang lưu...' : 'Lưu'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
-
