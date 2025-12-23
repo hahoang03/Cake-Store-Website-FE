@@ -18,6 +18,7 @@ import AdminRoute from './routes/AdminRoute';
 import OrderTracking from './pages/order/OrderTracking'
 import OrderDetail from './pages/order/OrderDetail';
 import UserProfile from './pages/user/UserProfile'
+import Custom from './pages/extra/customcake'
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
                 <Route path="/my-orders" element={<OrderTracking />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/orders/:id" element={<OrderDetail />} />
+                 <Route path="/custom" element={<Custom />} />
                 <Route path="/user-profile" element={<UserProfile />} />
                 <Route
                   path="/admin"
