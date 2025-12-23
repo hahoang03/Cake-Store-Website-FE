@@ -18,7 +18,6 @@ import AdminRoute from './routes/AdminRoute';
 import OrderTracking from './pages/OrderTracking'
 import OrderDetail from './pages/OrderDetail';
 import UserProfile from './pages/UserProfile'
-import TextCake from './pages/textcake'
 
 function App() {
   return (
@@ -42,7 +41,6 @@ function App() {
                 <Route path="/my-orders" element={<OrderTracking />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/orders/:id" element={<OrderDetail />} />
-                <Route path="/textcake" element={<TextCake />} />
                  <Route path="/user-profile" element={<UserProfile />} />
                 <Route
   path="/admin"
