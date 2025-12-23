@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useParams, Navigate, Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { api } from '../lib/api';
-import { Link } from 'react-router-dom';
 
 interface OrderItem {
   id: string;
@@ -11,7 +12,7 @@ interface OrderItem {
   image: string;
 }
 
-interface Order {
+interface OrderDetailType {
   id: string;
   user_id: string;
   payment_method: string;
@@ -27,121 +28,247 @@ interface Order {
   shipping_city: string;
   shipping_postal_code: string;
   shipping_country: string;
-  order_items?: OrderItem[];
+  order_items: OrderItem[];
   users?: { id: string; name: string; email: string };
 }
 
-export default function OrdersManager() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+interface ReviewType {
+  id: string;
+  product_id: string;
+  user_id: string;
+  name: string;
+  rating: number;
+  comment: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export default function OrderDetail() {
+  const { user, loading } = useAuth();
+  const { id } = useParams<{ id: string }>();
+  const [order, setOrder] = useState<OrderDetailType | null>(null);
+  const [loadingOrder, setLoadingOrder] = useState(true);
+  const [error, setError] = useState('');
+
+  // Modal review state
+  const [activeReviewItem, setActiveReviewItem] = useState<OrderItem | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [userReview, setUserReview] = useState<ReviewType | null>(null);
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    if (!user || !id) return;
 
-  const fetchOrders = async () => {
+    const fetchOrder = async () => {
+      try {
+        setLoadingOrder(true);
+        const res = await api.get(`/api/orders/${id}`);
+        setOrder(res.data.data);
+      } catch (err) {
+        console.error(err);
+        setError('Không thể tải chi tiết đơn hàng');
+      } finally {
+        setLoadingOrder(false);
+      }
+    };
+
+    fetchOrder();
+  }, [user, id]);
+
+  if (loading) return <p>Đang kiểm tra đăng nhập...</p>;
+  if (!user) return <Navigate to="/login" replace />;
+  if (loadingOrder) return <p>Đang tải chi tiết đơn hàng...</p>;
+  if (error) return <p className="text-red-600">{error}</p>;
+  if (!order) return <p>Đơn hàng không tồn tại</p>;
+
+  const openReviewModal = async (item: OrderItem) => {
+    setActiveReviewItem(item);
     try {
-      const res = await api.get('/api/orders'); // Admin API
-      setOrders(res.data.data || []);
+      // Lấy review của user hiện tại
+      const res = await api.get(`/api/reviews/product/${item.product_id}`);
+      const review =
+        res.data.data.find(
+          (r: ReviewType) => r.user_id === user.id
+        ) || null; setUserReview(review);
+      setReviewRating(review?.rating || 5);
+      setReviewComment(review?.comment || '');
     } catch (err) {
-      console.error('Load orders error:', err);
-      setOrders([]);
-    } finally {
-      setLoading(false);
+      console.error('Không thể tải review cũ', err);
+      setUserReview(null);
+      setReviewRating(5);
+      setReviewComment('');
     }
   };
 
-  const fetchOrderDetail = async (id: string) => {
+  const closeReviewModal = () => {
+    setActiveReviewItem(null);
+    setUserReview(null);
+    setReviewRating(5);
+    setReviewComment('');
+  };
+
+  const submitReview = async () => {
+    if (!activeReviewItem) return;
     try {
-      const res = await api.get(`/api/orders/${id}`);
-      setSelectedOrder(res.data.data);
+      if (userReview?.id) {
+        // Sửa review
+        await api.put(`/api/reviews/${userReview.id}`, {
+          rating: reviewRating,
+          comment: reviewComment,
+        });
+        alert('Cập nhật review thành công');
+      } else {
+        // Tạo review mới
+        await api.post(`/api/reviews`, {
+          product_id: activeReviewItem.product_id,
+          user_id: user.id,
+          rating: reviewRating,
+          comment: reviewComment,
+          name: user.name,
+        });
+        alert('Tạo review thành công');
+      }
+
+      // Refresh review trong modal
+      const res = await api.get(`/api/reviews/product/${activeReviewItem.product_id}`);
+      const review = res.data.data.find(
+        (r: ReviewType) => r.user_id === user.id
+      ) || null;
+      setUserReview(review);
+      setReviewRating(review?.rating || 5);
+      setReviewComment(review?.comment || '');
+      closeReviewModal();
     } catch (err) {
-      console.error('Load order detail error:', err);
-      setSelectedOrder(null);
-      alert('Không thể tải chi tiết đơn hàng');
+      console.error(err);
+      alert('Có lỗi khi gửi review');
     }
   };
 
-  const closeDetail = () => setSelectedOrder(null);
-
-  if (loading) return <div className="p-6">Đang tải danh sách đơn hàng...</div>;
+  const deleteReview = async () => {
+    if (!userReview?.id) return;
+    try {
+      await api.delete(`/api/reviews/${userReview.id}`);
+      alert('Xóa review thành công');
+      setUserReview(null);
+      setReviewRating(5);
+      setReviewComment('');
+      closeReviewModal();
+    } catch (err) {
+      console.error(err);
+      alert('Có lỗi khi xóa review');
+    }
+  };
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Quản lý đơn hàng (Admin)</h2>
+    <div className="max-w-5xl mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">Chi tiết đơn hàng</h1>
 
-      <table className="w-full border">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="p-2 text-left">ID</th>
-            <th className="p-2 text-left">Người đặt</th>
-            <th className="p-2 text-left">Tổng giá</th>
-            <th className="p-2 text-left">Thanh toán</th>
-            <th className="p-2 text-left">Giao hàng</th>
-            <th className="p-2 text-left">Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orders.map((o) => (
-            <tr key={o.id} className="border-t">
-              <td className="p-2">{o.id}</td>
-              <td className="p-2">{o.users?.name || 'Khách'}</td>
-              <td className="p-2">{o.total_price.toLocaleString('vi-VN')}₫</td>
-              <td className="p-2">{o.is_paid ? `Đã thanh toán (${o.payment_method})` : 'Chưa thanh toán'}</td>
-              <td className="p-2">{o.is_delivered ? 'Đã giao' : 'Chưa giao'}</td>
-              <td className="p-2">
+      <div className="border rounded p-4 mb-6">
+        <p><span className="font-semibold">Mã đơn:</span> {order.id}</p>
+        <p><span className="font-semibold">Người đặt:</span> {order.users?.name || 'Khách'}</p>
+        <p><span className="font-semibold">Tổng tiền:</span> {order.total_price.toLocaleString('vi-VN')}₫</p>
+        <p>
+          <span className="font-semibold">Thanh toán:</span>{' '}
+          {order.is_paid ? `Đã thanh toán (${order.paid_at ? new Date(order.paid_at).toLocaleString('vi-VN') : ''})` : 'Chưa thanh toán'}
+        </p>
+        <p>
+          <span className="font-semibold">Giao hàng:</span>{' '}
+          {order.is_delivered ? `Đã giao (${order.delivered_at ? new Date(order.delivered_at).toLocaleString('vi-VN') : ''})` : 'Chưa giao'}
+        </p>
+      </div>
+
+      <h2 className="text-2xl font-bold mb-4">Các sản phẩm</h2>
+      <div className="space-y-4">
+        {order.order_items.map((item) => (
+          <div key={item.id} className="flex flex-col md:flex-row items-start md:items-center border rounded p-4 gap-4">
+            <img src={item.image} alt={item.name} className="w-24 h-24 object-cover rounded" />
+            <div className="flex-1">
+              <p className="font-semibold">{item.name}</p>
+              <p>Số lượng: {item.qty}</p>
+              <p>Giá: {item.price.toLocaleString('vi-VN')}₫</p>
+              <p>Tổng: {(item.qty * item.price).toLocaleString('vi-VN')}₫</p>
+
+              {order.is_paid && order.is_delivered && (
                 <button
-                  className="px-2 py-1 text-white bg-blue-500 rounded"
-                  onClick={() => fetchOrderDetail(o.id)}
+                  onClick={() => openReviewModal(item)}
+                  className="mt-2 px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
                 >
-                  Xem chi tiết
+                  Đánh giá sản phẩm
                 </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
 
-      {/* Modal order detail */}
-      {selectedOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-10 z-50">
-          <div className="bg-white p-6 rounded w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-lg">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">Chi tiết đơn hàng: {selectedOrder.id}</h3>
+      {/* Modal review */}
+      {activeReviewItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
+            <h3 className="text-xl font-bold mb-4">{activeReviewItem.name} - Quản lý đánh giá</h3>
+
+            {userReview ? (
+              <div className="mb-4">
+                <p className="mb-1"><strong>Review hiện tại của bạn:</strong></p>
+                <p>Điểm: {userReview.rating}</p>
+                <p>Nhận xét: {userReview.comment}</p>
+              </div>
+            ) : (
+              <p className="mb-4 text-gray-500">Bạn chưa có review nào cho sản phẩm này.</p>
+            )}
+
+            <label className="block mb-2">
+              Điểm (1-5):
+              <input
+                type="number"
+                min={1}
+                max={5}
+                value={reviewRating}
+                onChange={(e) => setReviewRating(Number(e.target.value))}
+                className="border rounded px-2 py-1 w-16 ml-2"
+              />
+            </label>
+
+            <label className="block mb-4">
+              Nhận xét:
+              <textarea
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                className="w-full border rounded px-2 py-1 mt-1"
+              />
+            </label>
+
+            <div className="flex justify-end gap-2">
+              {userReview && (
+                <button
+                  onClick={deleteReview}
+                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                >
+                  Xóa
+                </button>
+              )}
               <button
-                onClick={closeDetail}
-                className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400"
+                onClick={submitReview}
+                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
               >
-                Đóng
+                Lưu
               </button>
-            </div>
-
-            <div className="border rounded p-4 mb-6">
-              <p><span className="font-semibold">Người đặt:</span> {selectedOrder.users?.name || 'Khách'}</p>
-              <p><span className="font-semibold">Tổng tiền:</span> {selectedOrder.total_price.toLocaleString('vi-VN')}₫</p>
-              <p><span className="font-semibold">Thanh toán:</span> {selectedOrder.is_paid ? `Đã thanh toán (${selectedOrder.paid_at ? new Date(selectedOrder.paid_at).toLocaleString('vi-VN') : ''})` : 'Chưa thanh toán'}</p>
-              <p><span className="font-semibold">Giao hàng:</span> {selectedOrder.is_delivered ? `Đã giao (${selectedOrder.delivered_at ? new Date(selectedOrder.delivered_at).toLocaleString('vi-VN') : ''})` : 'Chưa giao'}</p>
-              <p><span className="font-semibold">Địa chỉ:</span> {selectedOrder.shipping_address}, {selectedOrder.shipping_city}, {selectedOrder.shipping_postal_code}, {selectedOrder.shipping_country}</p>
-            </div>
-
-            <h4 className="text-lg font-bold mb-2">Sản phẩm trong đơn</h4>
-            <div className="space-y-4">
-              {selectedOrder.order_items?.map((item) => (
-                <div key={item.id} className="flex flex-col md:flex-row items-start md:items-center border rounded p-4 gap-4">
-                  <img src={item.image} alt={item.name} className="w-24 h-24 object-cover rounded" />
-                  <div className="flex-1">
-                    <p className="font-semibold">{item.name}</p>
-                    <p>Số lượng: {item.qty}</p>
-                    <p>Giá: {item.price.toLocaleString('vi-VN')}₫</p>
-                    <p>Tổng: {(item.qty * item.price).toLocaleString('vi-VN')}₫</p>
-                  </div>
-                </div>
-              ))}
+              <button
+                onClick={closeReviewModal}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+              >
+                Hủy
+              </button>
             </div>
           </div>
         </div>
       )}
+
+      <div className="mt-6">
+        <Link to="/my-orders" className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
+          ← Quay lại danh sách đơn hàng
+        </Link>
+      </div>
     </div>
   );
 }

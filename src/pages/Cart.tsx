@@ -14,7 +14,6 @@ export default function Cart() {
   const [orderSuccess, setOrderSuccess] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'COD' | 'Chuyển khoản'>('COD')
   const [showCheckout, setShowCheckout] = useState(false)
-
   const [formData, setFormData] = useState({
     customer_name: '',
     customer_phone: '',
@@ -25,26 +24,20 @@ export default function Cart() {
     shipping_country: '',
   })
 
-  /* ================= AUTH GUARD ================= */
   useEffect(() => {
     if (!loading && !user) {
       navigate('/login', { state: { redirect: '/cart' } })
     }
   }, [user, loading, navigate])
 
-  if (loading) {
-    return <p className="text-center py-20">Đang kiểm tra đăng nhập...</p>
-  }
-
+  if (loading) return <p className="text-center py-20">Đang kiểm tra đăng nhập...</p>
   if (!user) return null
 
-  /* ================= PRICE ================= */
   const itemsPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const taxPrice = 0
   const shippingPrice = 30000
   const totalPrice = itemsPrice + taxPrice + shippingPrice
 
-  /* ================= CHECKOUT ================= */
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault()
     if (items.length === 0) {
@@ -86,7 +79,6 @@ export default function Cart() {
     }
   }
 
-  /* ================= SUCCESS ================= */
   if (orderSuccess) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-20 text-center">
@@ -96,7 +88,6 @@ export default function Cart() {
     )
   }
 
-  /* ================= EMPTY ================= */
   if (items.length === 0) {
     return (
       <div className="text-center py-20">
@@ -106,13 +97,34 @@ export default function Cart() {
     )
   }
 
-  /* ================= MAIN ================= */
+ const handleUpdateQuantity = async (productId: string, newQty: number) => {
+  try {
+    const res = await api.get(`/api/products/${productId}`)
+    const product = res.data.data
+
+    if (newQty > product.count_in_stock) {
+      alert(`Bạn chỉ có thể mua tối đa ${product.count_in_stock} sản phẩm này`)
+      return
+    }
+
+    if (newQty <= 0) {
+      // Nếu giảm xuống 0, remove khỏi cart
+      removeFromCart(productId)
+      return
+    }
+
+    updateQuantity(productId, newQty)
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold mb-8">Giỏ hàng</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* ITEMS */}
         <div className="lg:col-span-2 space-y-4">
           {items.map(item => (
             <div key={item.productId} className="bg-white p-6 rounded shadow flex gap-6">
@@ -120,11 +132,11 @@ export default function Cart() {
               <div className="flex-1">
                 <h3 className="font-bold">{item.productName}</h3>
                 <div className="flex items-center gap-3 mt-3">
-                  <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} className="border p-1">
+                  <button onClick={() => handleUpdateQuantity(item.productId, item.quantity - 1)} className="border p-1">
                     <Minus size={16} />
                   </button>
                   <span>{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="border p-1">
+                  <button onClick={() => handleUpdateQuantity(item.productId, item.quantity + 1)} className="border p-1">
                     <Plus size={16} />
                   </button>
                 </div>
@@ -139,7 +151,6 @@ export default function Cart() {
           ))}
         </div>
 
-        {/* SUMMARY */}
         <div className="bg-white p-6 rounded shadow h-fit">
           <h2 className="font-bold text-xl mb-4">Tổng đơn</h2>
           <div className="flex justify-between mb-2">
@@ -163,8 +174,6 @@ export default function Cart() {
         </div>
       </div>
 
-      {/* CHECKOUT MODAL */}
-      {/* CHECKOUT MODAL */}
       {showCheckout && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 px-4">
           <div className="bg-white rounded shadow-lg w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 relative">
@@ -176,82 +185,48 @@ export default function Cart() {
             </button>
             <h3 className="text-xl font-bold mb-4">Thông tin giao hàng</h3>
             <form onSubmit={handleCheckout} className="space-y-4">
-              <input
-                required placeholder="Họ và tên" className="w-full border p-3 rounded"
+              <input required placeholder="Họ và tên" className="w-full border p-3 rounded"
                 value={formData.customer_name} onChange={e => setFormData({ ...formData, customer_name: e.target.value })}
               />
-              <input
-                required placeholder="Số điện thoại" className="w-full border p-3 rounded"
+              <input required placeholder="Số điện thoại" className="w-full border p-3 rounded"
                 value={formData.customer_phone} onChange={e => setFormData({ ...formData, customer_phone: e.target.value })}
               />
-              <input
-                required type="email" placeholder="Email" className="w-full border p-3 rounded"
+              <input required type="email" placeholder="Email" className="w-full border p-3 rounded"
                 value={formData.customer_email} onChange={e => setFormData({ ...formData, customer_email: e.target.value })}
               />
-              <textarea
-                required placeholder="Địa chỉ giao hàng" className="w-full border p-3 rounded"
+              <textarea required placeholder="Địa chỉ giao hàng" className="w-full border p-3 rounded"
                 value={formData.delivery_address} onChange={e => setFormData({ ...formData, delivery_address: e.target.value })}
               />
-              <input
-                required placeholder="Thành phố" className="w-full border p-3 rounded"
+              <input required placeholder="Thành phố" className="w-full border p-3 rounded"
                 value={formData.shipping_city} onChange={e => setFormData({ ...formData, shipping_city: e.target.value })}
               />
-              <input
-                required placeholder="Mã bưu chính" className="w-full border p-3 rounded"
+              <input required placeholder="Mã bưu chính" className="w-full border p-3 rounded"
                 value={formData.shipping_postal_code} onChange={e => setFormData({ ...formData, shipping_postal_code: e.target.value })}
               />
-              <input
-                required placeholder="Quốc gia" className="w-full border p-3 rounded"
+              <input required placeholder="Quốc gia" className="w-full border p-3 rounded"
                 value={formData.shipping_country} onChange={e => setFormData({ ...formData, shipping_country: e.target.value })}
               />
 
-              {/* PAYMENT */}
-              {/* PAYMENT */}
               <div className="space-y-2">
                 <p className="font-semibold">Phương thức thanh toán</p>
-
                 <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="COD"
-                    checked={paymentMethod === 'COD'}
-                    onChange={() => setPaymentMethod('COD')}
-                  />
+                  <input type="radio" name="paymentMethod" value="COD"
+                    checked={paymentMethod === 'COD'} onChange={() => setPaymentMethod('COD')} />
                   Thanh toán khi nhận hàng (COD)
                 </label>
-
                 <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="Chuyển khoản"
-                    checked={paymentMethod === 'Chuyển khoản'}
-                    onChange={() => setPaymentMethod('Chuyển khoản')}
-                  />
+                  <input type="radio" name="paymentMethod" value="Chuyển khoản"
+                    checked={paymentMethod === 'Chuyển khoản'} onChange={() => setPaymentMethod('Chuyển khoản')} />
                   Chuyển khoản ngân hàng
                 </label>
-
-                {/* Hiển thị QR code khi chọn Chuyển khoản */}
                 {paymentMethod === 'Chuyển khoản' && (
                   <div className="mt-2">
-                    
-                    <a
-                      href="https://me-qr.com"
-                      style={{ cursor: 'pointer', display: 'block' }}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <img
-                        src="https://storage2.me-qr.com/qr/290881940.png?v=1766287637"
-                        alt="Tạo QR code miễn phí"
-                        className="border rounded"
-                      />
+                    <a href="https://me-qr.com" target="_blank" rel="noopener noreferrer">
+                      <img src="https://storage2.me-qr.com/qr/290881940.png?v=1766287637" alt="Tạo QR code miễn phí" className="border rounded" />
                     </a>
                   </div>
                 )}
               </div>
-
 
               <button type="submit" disabled={submitting} className="w-full bg-orange-500 text-white py-3 rounded">
                 {submitting ? 'Đang xử lý...' : 'Xác nhận đặt hàng'}
@@ -263,4 +238,3 @@ export default function Cart() {
     </div>
   )
 }
-
