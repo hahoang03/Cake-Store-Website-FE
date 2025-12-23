@@ -5,8 +5,7 @@ import { useCart } from '../contexts/CartContext'
 import { useAuth } from '../contexts/AuthContext'
 import { api } from '../lib/api'
 
-const TAX_RATE = 0.1
-const SHIPPING_PRICE = 20000
+
 
 interface Product {
   id: string
@@ -77,15 +76,14 @@ export default function Cart() {
   if (loading) return <p className="text-center py-20">Đang kiểm tra đăng nhập...</p>
   if (!user) return null
 
+
+    const shippingPrice = 30_000 
+  const TAX_RATE = 0.05
+
   // FE tính tạm để hiển thị
   const itemsPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const taxPrice = Math.round(itemsPrice * TAX_RATE)
-
-  // --- FE tính free shipping ---
-  const FREE_SHIPPING_THRESHOLD = 200_000
-  const STANDARD_SHIPPING_PRICE = 20_000
-  const shippingPrice = itemsPrice >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING_PRICE
-
+  
   const totalPrice = itemsPrice + taxPrice + shippingPrice
 
 
