@@ -13,7 +13,7 @@ interface Product {
   image: string
   price: number
   category_id: string
-  count_in_stock: number 
+  count_in_stock: number
 }
 
 
@@ -50,19 +50,19 @@ export default function Cart() {
 
 
   useEffect(() => {
-  const fetchSuggestedProducts = async () => {
-    try {
-      const res = await api.get('/api/products') 
-      const allProducts: Product[] = res.data.data || []
-      const shuffled = allProducts.sort(() => 0.5 - Math.random()).slice(0, 6)
-      setSuggestedProducts(shuffled)
-    } catch (err) {
-      console.error(err)
+    const fetchSuggestedProducts = async () => {
+      try {
+        const res = await api.get('/api/products')
+        const allProducts: Product[] = res.data.data || []
+        const shuffled = allProducts.sort(() => 0.5 - Math.random()).slice(0, 6)
+        setSuggestedProducts(shuffled)
+      } catch (err) {
+        console.error(err)
+      }
     }
-  }
 
-  fetchSuggestedProducts()
-}, [])
+    fetchSuggestedProducts()
+  }, [])
 
 
 
@@ -77,13 +77,13 @@ export default function Cart() {
   if (!user) return null
 
 
-    const shippingPrice = 30_000 
+  const shippingPrice = 30_000
   const TAX_RATE = 0.05
 
   // FE tính tạm để hiển thị
   const itemsPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const taxPrice = Math.round(itemsPrice * TAX_RATE)
-  
+
   const totalPrice = itemsPrice + taxPrice + shippingPrice
 
 
@@ -146,53 +146,52 @@ export default function Cart() {
   }
 
   if (orderSuccess) {
-  return (
-  <div className="max-w-7xl mx-auto px-4 py-20 text-center animate-fadeIn">
-      <h2 className="text-2xl font-bold text-green-600 mb-8">
-        Đặt hàng thành công, cảm ơn bạn đã mua hàng!
-      </h2>
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-20 text-center animate-fadeIn">
+        <h2 className="text-2xl font-bold text-green-600 mb-8">
+          Đặt hàng thành công, cảm ơn bạn đã mua hàng!
+        </h2>
 
-      <h3 className="text-xl text-orange-500 font-semibold mb-6">Sản phẩm liên quan</h3>
+        <h3 className="text-xl text-orange-500 font-semibold mb-6">Sản phẩm liên quan</h3>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {suggestedProducts.map((p) => (
-          <Link
-            key={p.id}
-            to={`/product/${p.id}`}
-            className="group bg-white rounded-2xl shadow-sm hover:shadow-2xl overflow-hidden transform transition-all duration-500 hover:-translate-y-2"
-          >
-            <div className="aspect-square bg-gray-100 overflow-hidden">
-              <img
-                src={p.image}
-                alt={p.name}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-              />
-            </div>
-            <div className="p-4 text-center">
-              <h4 className="text-lg font-semibold mb-2 line-clamp-2">{p.name}</h4>
-              <p className="text-orange-500 font-bold">
-                {p.price.toLocaleString('vi-VN')} ₫
-              </p>
-              <span
-                className={`inline-block mt-3 px-3 py-1 text-sm rounded-full ${
-                  p.count_in_stock > 0
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {suggestedProducts.map((p) => (
+            <Link
+              key={p.id}
+              to={`/product/${p.id}`}
+              className="group bg-white rounded-2xl shadow-sm hover:shadow-2xl overflow-hidden transform transition-all duration-500 hover:-translate-y-2"
+            >
+              <div className="aspect-square bg-gray-100 overflow-hidden">
+                <img
+                  src={p.image}
+                  alt={p.name}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+              </div>
+              <div className="p-4 text-center">
+                <h4 className="text-lg font-semibold mb-2 line-clamp-2">{p.name}</h4>
+                <p className="text-orange-500 font-bold">
+                  {p.price.toLocaleString('vi-VN')} ₫
+                </p>
+                <span
+                  className={`inline-block mt-3 px-3 py-1 text-sm rounded-full ${p.count_in_stock > 0
                     ? 'bg-orange-100 text-orange-600 group-hover:bg-orange-500 group-hover:text-white'
                     : 'bg-gray-300 text-gray-600'
-                }`}
-              >
-                {p.count_in_stock > 0 ? 'Xem chi tiết' : 'Hết hàng'}
-              </span>
-            </div>
-          </Link>
-        ))}
-      </div>
+                    }`}
+                >
+                  {p.count_in_stock > 0 ? 'Xem chi tiết' : 'Hết hàng'}
+                </span>
+              </div>
+            </Link>
+          ))}
+        </div>
 
-      <Link to="/" className="inline-block mt-10 text-orange-500 font-bold">
-        Tiếp tục mua sắm
-      </Link>
-    </div>
-  )
-}
+        <Link to="/" className="inline-block mt-10 text-orange-500 font-bold">
+          Tiếp tục mua sắm
+        </Link>
+      </div>
+    )
+  }
 
 
   if (items.length === 0) {
@@ -341,12 +340,12 @@ export default function Cart() {
                   value={formData.shipping_city}
                   onChange={e => setFormData({ ...formData, shipping_city: e.target.value })}
                 >
-                  <option value="">Chọn thành phố</option>
-                  <option value="Hà Nội">Hà Nội</option>
-                  <option value="TP Hồ Chí Minh">TP Hồ Chí Minh</option>
-                  <option value="Đà Nẵng">Đà Nẵng</option>
-                  <option value="Hải Phòng">Hải Phòng</option>
-                  <option value="Cần Thơ">Cần Thơ</option>
+                  <option value="">Chọn quận</option>
+                  <option value="Quận 1">Quận 1</option>
+                  <option value="Quận 2">Quận 2</option>
+                  <option value="Quận 3">Quận 3</option>
+                  <option value="Quận 4">Quận 4</option>
+                  <option value="Quận 5">Quận 5</option>
                 </select>
                 {errors.shipping_city && <p className="text-red-500 text-sm mt-1">{errors.shipping_city}</p>}
               </div>
