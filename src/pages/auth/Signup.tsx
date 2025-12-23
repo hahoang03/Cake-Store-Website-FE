@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff } from 'lucide-react'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../../contexts/AuthContext'
 
 type ErrorMap = Record<string, string>
 
@@ -74,11 +74,10 @@ export default function Signup() {
 
   const inputClass = (field: string) =>
     `w-full px-4 py-3 border rounded-lg outline-none transition
-     ${
-       errors[field]
-         ? 'border-red-500 focus:border-red-500 focus:ring-0'
-         : 'border-gray-300 focus:border-gray-400 focus:ring-0'
-     }`
+     ${errors[field]
+      ? 'border-red-500 focus:border-red-500 focus:ring-0'
+      : 'border-gray-300 focus:border-gray-400 focus:ring-0'
+    }`
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#eef3ea] to-white px-4">

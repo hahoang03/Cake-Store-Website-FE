@@ -1,8 +1,8 @@
 // src/pages/OrderTracking.tsx
 import { useEffect, useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
-import { api } from '../lib/api';
+import { api } from '../../lib/api';
 
 interface Order {
   id: string;
@@ -88,11 +88,11 @@ export default function OrderTracking() {
                 </p>
               </div>
               <Link
-  to={`/orders/${order.id}`}
-  className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
->
-  Xem chi tiết
-</Link>
+                to={`/orders/${order.id}`}
+                className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+              >
+                Xem chi tiết
+              </Link>
             </div>
           ))}
         </div>

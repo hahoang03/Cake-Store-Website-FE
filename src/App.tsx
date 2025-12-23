@@ -3,21 +3,21 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import Header from './components/Header';
 import FloatingButtons from './components/FloatingButtons';
-import ProductList from './pages/ProductList';
-import ProductDetail from './pages/ProductDetail';
-import Cart from './pages/Cart';
-import Login from './pages/Login';
+import ProductList from './pages/product/ProductList';
+import ProductDetail from './pages/product/ProductDetail';
+import Cart from './pages/cart/Cart';
+import Login from './pages/auth/Login';
 import Dashboard from './pages/admin/Dashboard';
-import Delivery from './pages/Delivery';
-import Contact from './pages/Contact';
-import Stores from './pages/Stores';
-import Loyalty from './pages/Loyalty';
-import News from './pages/News';
-import Signup from './pages/Signup'
+import Delivery from './pages/content/Delivery';
+import Contact from './pages/content/Contact';
+import Stores from './pages/content/Stores';
+import Loyalty from './pages/content/Loyalty';
+import News from './pages/content/News';
+import Signup from './pages/auth/Signup'
 import AdminRoute from './routes/AdminRoute';
-import OrderTracking from './pages/OrderTracking'
-import OrderDetail from './pages/OrderDetail';
-import UserProfile from './pages/UserProfile'
+import OrderTracking from './pages/order/OrderTracking'
+import OrderDetail from './pages/order/OrderDetail';
+import UserProfile from './pages/user/UserProfile'
 
 function App() {
   return (
@@ -41,15 +41,15 @@ function App() {
                 <Route path="/my-orders" element={<OrderTracking />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/orders/:id" element={<OrderDetail />} />
-                 <Route path="/user-profile" element={<UserProfile />} />
+                <Route path="/user-profile" element={<UserProfile />} />
                 <Route
-  path="/admin"
-  element={
-    <AdminRoute>
-      <Dashboard />
-    </AdminRoute>
-  }
-/>
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <Dashboard />
+                    </AdminRoute>
+                  }
+                />
 
               </Routes>
             </main>

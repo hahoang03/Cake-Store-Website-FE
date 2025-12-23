@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Minus, Star } from 'lucide-react'
-import { useCart } from '../contexts/CartContext'
-import { useAuth } from '../contexts/AuthContext'
-import { api } from '../lib/api'
+import { useCart } from '../../contexts/CartContext'
+import { useAuth } from '../../contexts/AuthContext'
+import { api } from '../../lib/api'
 
 interface Product {
   id: string
@@ -143,16 +143,16 @@ export default function ProductDetail() {
   }
 
   const handleDeleteReview = async (reviewId: string) => {
-  if (!confirm('Bạn có chắc muốn xoá review này không?')) return
+    if (!confirm('Bạn có chắc muốn xoá review này không?')) return
 
-  try {
-    await api.delete(`/api/reviews/${reviewId}`)
-    setReviews(prev => prev.filter(r => r.id !== reviewId))
-  } catch (err) {
-    console.error(err)
-    alert('Không thể xoá review')
+    try {
+      await api.delete(`/api/reviews/${reviewId}`)
+      setReviews(prev => prev.filter(r => r.id !== reviewId))
+    } catch (err) {
+      console.error(err)
+      alert('Không thể xoá review')
+    }
   }
-}
 
 
 

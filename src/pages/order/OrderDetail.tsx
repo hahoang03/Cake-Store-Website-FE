@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { api } from '../lib/api';
+import { useAuth } from '../../contexts/AuthContext';
+import { api } from '../../lib/api';
 
 interface OrderItem {
   id: string;
