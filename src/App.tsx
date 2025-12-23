@@ -26,7 +26,7 @@ function App() {
         <CartProvider>
           <div className="min-h-screen bg-gray-50">
             <Header />
-            <main>
+            <main className="bg-gradient-to-br from-[#eef3ea] to-white">
               <Routes>
                 <Route path="/" element={<ProductList />} />
                 <Route path="/products" element={<ProductList />} />
@@ -41,7 +41,7 @@ function App() {
                 <Route path="/my-orders" element={<OrderTracking />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/orders/:id" element={<OrderDetail />} />
-                 <Route path="//user-profile" element={<UserProfile />} />
+                 <Route path="/user-profile" element={<UserProfile />} />
                 <Route
   path="/admin"
   element={

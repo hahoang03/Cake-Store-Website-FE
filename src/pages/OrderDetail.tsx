@@ -186,7 +186,9 @@ export default function OrderDetail() {
               <p className="font-semibold">{item.name}</p>
               <p>Số lượng: {item.qty}</p>
               <p>Giá: {item.price.toLocaleString('vi-VN')}₫</p>
-              <p>Tổng: {(item.qty * item.price).toLocaleString('vi-VN')}₫</p>
+              <p>Giá Ship: {order.shipping_price.toLocaleString('vi-VN')}₫</p>
+              <p>Thuế: {order.tax_price.toLocaleString('vi-VN')}₫</p>
+              <p>Tổng: {order.total_price.toLocaleString('vi-VN')}₫</p>
 
               {order.is_paid && order.is_delivered && (
                 <button

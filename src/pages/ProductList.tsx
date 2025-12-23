@@ -8,7 +8,7 @@ interface Product {
   image: string
   price: number
   category_id: string
-  count_in_stock: number // ✅ thêm count_in_stock
+  count_in_stock: number 
 }
 
 interface Category {

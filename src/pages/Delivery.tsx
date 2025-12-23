@@ -24,15 +24,15 @@ export default function Delivery() {
         <section>
           <h2 className="text-xl font-bold text-gray-800 mb-3">Phí giao hàng</h2>
           <p className="text-gray-700 leading-relaxed">
-            Miễn phí giao hàng cho đơn hàng từ 500.000đ trở lên trong bán kính 5km.
-            Phí giao hàng từ 20.000đ - 50.000đ tùy khoảng cách.
+            Miễn phí giao hàng cho đơn hàng từ 200.000đ trở lên trong bán kính 5km.
+            Phí giao hàng đồng giá 20.000đ trong nội thành TPHCM.
           </p>
         </section>
 
         <section>
           <h2 className="text-xl font-bold text-gray-800 mb-3">Khu vực giao hàng</h2>
           <p className="text-gray-700 leading-relaxed">
-            Chúng tôi hiện đang giao hàng tại các quận nội thành TP.HCM và một số khu vực lân cận.
+            Chúng tôi hiện đang giao hàng tại các quận nội thành TP.HCM.
             Vui lòng liên hệ để biết thêm chi tiết về khu vực giao hàng.
           </p>
         </section>

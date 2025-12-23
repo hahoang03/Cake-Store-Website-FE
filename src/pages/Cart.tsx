@@ -5,6 +5,19 @@ import { useCart } from '../contexts/CartContext'
 import { useAuth } from '../contexts/AuthContext'
 import { api } from '../lib/api'
 
+const TAX_RATE = 0.1
+const SHIPPING_PRICE = 20000
+
+interface Product {
+  id: string
+  name: string
+  image: string
+  price: number
+  category_id: string
+  count_in_stock: number 
+}
+
+
 export default function Cart() {
   const navigate = useNavigate()
   const { user, loading } = useAuth()
@@ -20,9 +33,40 @@ export default function Cart() {
     customer_email: '',
     delivery_address: '',
     shipping_city: '',
-    shipping_postal_code: '',
-    shipping_country: '',
+    shipping_postal_code: '700000',
+    shipping_country: 'VietNam',
   })
+
+  const [errors, setErrors] = useState({
+    customer_name: '',
+    customer_phone: '',
+    customer_email: '',
+    delivery_address: '',
+    shipping_city: '',
+  });
+
+
+  const [suggestedProducts, setSuggestedProducts] = useState<Product[]>([])
+
+
+
+  useEffect(() => {
+  const fetchSuggestedProducts = async () => {
+    try {
+      const res = await api.get('/api/products') 
+      const allProducts: Product[] = res.data.data || []
+      const shuffled = allProducts.sort(() => 0.5 - Math.random()).slice(0, 6)
+      setSuggestedProducts(shuffled)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  fetchSuggestedProducts()
+}, [])
+
+
+
 
   useEffect(() => {
     if (!loading && !user) {
@@ -33,10 +77,38 @@ export default function Cart() {
   if (loading) return <p className="text-center py-20">Đang kiểm tra đăng nhập...</p>
   if (!user) return null
 
+  // FE tính tạm để hiển thị
   const itemsPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const taxPrice = 0
-  const shippingPrice = 30000
+  const taxPrice = Math.round(itemsPrice * TAX_RATE)
+
+  // --- FE tính free shipping ---
+  const FREE_SHIPPING_THRESHOLD = 200_000
+  const STANDARD_SHIPPING_PRICE = 20_000
+  const shippingPrice = itemsPrice >= FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING_PRICE
+
   const totalPrice = itemsPrice + taxPrice + shippingPrice
+
+
+  const handleUpdateQuantity = async (productId: string, newQty: number) => {
+    try {
+      const res = await api.get(`/api/products/${productId}`)
+      const product = res.data.data
+
+      if (newQty > product.count_in_stock) {
+        alert(`Bạn chỉ có thể mua tối đa ${product.count_in_stock} sản phẩm này`)
+        return
+      }
+
+      if (newQty <= 0) {
+        removeFromCart(productId)
+        return
+      }
+
+      updateQuantity(productId, newQty)
+    } catch (err) {
+      console.error(err)
+    }
+  }
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -57,10 +129,6 @@ export default function Cart() {
           image: item.productImage,
         })),
         payment_method: paymentMethod,
-        items_price: itemsPrice,
-        tax_price: taxPrice,
-        shipping_price: shippingPrice,
-        total_price: totalPrice,
         shipping_address: formData.delivery_address,
         shipping_city: formData.shipping_city,
         shipping_postal_code: formData.shipping_postal_code,
@@ -71,22 +139,63 @@ export default function Cart() {
       clearCart()
       setShowCheckout(false)
       setOrderSuccess(true)
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
-      alert('Đặt hàng thất bại')
+      alert(err.response?.data?.message || 'Đặt hàng thất bại')
     } finally {
       setSubmitting(false)
     }
   }
 
   if (orderSuccess) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-        <h2 className="text-2xl font-bold text-green-600 mb-4">Đặt hàng thành công 🎉</h2>
-        <Link to="/" className="text-orange-500 font-bold">Tiếp tục mua sắm</Link>
+  return (
+  <div className="max-w-7xl mx-auto px-4 py-20 text-center animate-fadeIn">
+      <h2 className="text-2xl font-bold text-green-600 mb-8">
+        Đặt hàng thành công, cảm ơn bạn đã mua hàng!
+      </h2>
+
+      <h3 className="text-xl text-orange-500 font-semibold mb-6">Sản phẩm liên quan</h3>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {suggestedProducts.map((p) => (
+          <Link
+            key={p.id}
+            to={`/product/${p.id}`}
+            className="group bg-white rounded-2xl shadow-sm hover:shadow-2xl overflow-hidden transform transition-all duration-500 hover:-translate-y-2"
+          >
+            <div className="aspect-square bg-gray-100 overflow-hidden">
+              <img
+                src={p.image}
+                alt={p.name}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+            </div>
+            <div className="p-4 text-center">
+              <h4 className="text-lg font-semibold mb-2 line-clamp-2">{p.name}</h4>
+              <p className="text-orange-500 font-bold">
+                {p.price.toLocaleString('vi-VN')} ₫
+              </p>
+              <span
+                className={`inline-block mt-3 px-3 py-1 text-sm rounded-full ${
+                  p.count_in_stock > 0
+                    ? 'bg-orange-100 text-orange-600 group-hover:bg-orange-500 group-hover:text-white'
+                    : 'bg-gray-300 text-gray-600'
+                }`}
+              >
+                {p.count_in_stock > 0 ? 'Xem chi tiết' : 'Hết hàng'}
+              </span>
+            </div>
+          </Link>
+        ))}
       </div>
-    )
-  }
+
+      <Link to="/" className="inline-block mt-10 text-orange-500 font-bold">
+        Tiếp tục mua sắm
+      </Link>
+    </div>
+  )
+}
+
 
   if (items.length === 0) {
     return (
@@ -96,29 +205,6 @@ export default function Cart() {
       </div>
     )
   }
-
- const handleUpdateQuantity = async (productId: string, newQty: number) => {
-  try {
-    const res = await api.get(`/api/products/${productId}`)
-    const product = res.data.data
-
-    if (newQty > product.count_in_stock) {
-      alert(`Bạn chỉ có thể mua tối đa ${product.count_in_stock} sản phẩm này`)
-      return
-    }
-
-    if (newQty <= 0) {
-      // Nếu giảm xuống 0, remove khỏi cart
-      removeFromCart(productId)
-      return
-    }
-
-    updateQuantity(productId, newQty)
-  } catch (err) {
-    console.error(err)
-  }
-}
-
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
@@ -159,7 +245,13 @@ export default function Cart() {
           </div>
           <div className="flex justify-between mb-2">
             <span>Phí vận chuyển</span>
-            <span>{shippingPrice.toLocaleString('vi-VN')} ₫</span>
+            <span>
+              {shippingPrice.toLocaleString('vi-VN')} ₫
+            </span>
+          </div>
+          <div className="flex justify-between mb-2">
+            <span>Thuế</span>
+            <span>{taxPrice.toLocaleString('vi-VN')} ₫</span>
           </div>
           <div className="flex justify-between font-bold text-xl">
             <span>Tổng cộng</span>
@@ -184,57 +276,94 @@ export default function Cart() {
               <X size={20} />
             </button>
             <h3 className="text-xl font-bold mb-4">Thông tin giao hàng</h3>
-            <form onSubmit={handleCheckout} className="space-y-4">
-              <input required placeholder="Họ và tên" className="w-full border p-3 rounded"
-                value={formData.customer_name} onChange={e => setFormData({ ...formData, customer_name: e.target.value })}
-              />
-              <input required placeholder="Số điện thoại" className="w-full border p-3 rounded"
-                value={formData.customer_phone} onChange={e => setFormData({ ...formData, customer_phone: e.target.value })}
-              />
-              <input required type="email" placeholder="Email" className="w-full border p-3 rounded"
-                value={formData.customer_email} onChange={e => setFormData({ ...formData, customer_email: e.target.value })}
-              />
-              <textarea required placeholder="Địa chỉ giao hàng" className="w-full border p-3 rounded"
-                value={formData.delivery_address} onChange={e => setFormData({ ...formData, delivery_address: e.target.value })}
-              />
-              <input required placeholder="Thành phố" className="w-full border p-3 rounded"
-                value={formData.shipping_city} onChange={e => setFormData({ ...formData, shipping_city: e.target.value })}
-              />
-              <input required placeholder="Mã bưu chính" className="w-full border p-3 rounded"
-                value={formData.shipping_postal_code} onChange={e => setFormData({ ...formData, shipping_postal_code: e.target.value })}
-              />
-              <input required placeholder="Quốc gia" className="w-full border p-3 rounded"
-                value={formData.shipping_country} onChange={e => setFormData({ ...formData, shipping_country: e.target.value })}
-              />
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
 
-              <div className="space-y-2">
-                <p className="font-semibold">Phương thức thanh toán</p>
-                <label className="flex items-center gap-2">
-                  <input type="radio" name="paymentMethod" value="COD"
-                    checked={paymentMethod === 'COD'} onChange={() => setPaymentMethod('COD')} />
-                  Thanh toán khi nhận hàng (COD)
-                </label>
-                <label className="flex items-center gap-2">
-                  <input type="radio" name="paymentMethod" value="Chuyển khoản"
-                    checked={paymentMethod === 'Chuyển khoản'} onChange={() => setPaymentMethod('Chuyển khoản')} />
-                  Chuyển khoản ngân hàng
-                </label>
-                {paymentMethod === 'Chuyển khoản' && (
-                  <div className="mt-2">
-                    <a href="https://me-qr.com" target="_blank" rel="noopener noreferrer">
-                      <img src="https://storage2.me-qr.com/qr/290881940.png?v=1766287637" alt="Tạo QR code miễn phí" className="border rounded" />
-                    </a>
-                  </div>
-                )}
+                const newErrors = {
+                  customer_name: formData.customer_name.trim() ? '' : 'Vui lòng nhập họ và tên',
+                  customer_phone: /^(0|\+84)\d{9,10}$/.test(formData.customer_phone) ? '' : 'Số điện thoại không hợp lệ',
+                  customer_email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.customer_email) ? '' : 'Email không hợp lệ',
+                  delivery_address: formData.delivery_address.trim() ? '' : 'Vui lòng nhập địa chỉ giao hàng',
+                  shipping_city: formData.shipping_city.trim() ? '' : 'Vui lòng chọn thành phố',
+                };
+
+                setErrors(newErrors);
+
+                // Nếu có lỗi thì dừng submit
+                if (Object.values(newErrors).some(msg => msg)) return;
+
+                handleCheckout(e);
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <input
+                  placeholder="Họ và tên"
+                  className="w-full border p-3 rounded"
+                  value={formData.customer_name}
+                  onChange={e => setFormData({ ...formData, customer_name: e.target.value })}
+                />
+                {errors.customer_name && <p className="text-red-500 text-sm mt-1">{errors.customer_name}</p>}
               </div>
 
-              <button type="submit" disabled={submitting} className="w-full bg-orange-500 text-white py-3 rounded">
-                {submitting ? 'Đang xử lý...' : 'Xác nhận đặt hàng'}
+              <div>
+                <input
+                  placeholder="Số điện thoại"
+                  className="w-full border p-3 rounded"
+                  value={formData.customer_phone}
+                  onChange={e => setFormData({ ...formData, customer_phone: e.target.value })}
+                />
+                {errors.customer_phone && <p className="text-red-500 text-sm mt-1">{errors.customer_phone}</p>}
+              </div>
+
+              <div>
+                <input
+                  placeholder="Email"
+                  className="w-full border p-3 rounded"
+                  value={formData.customer_email}
+                  onChange={e => setFormData({ ...formData, customer_email: e.target.value })}
+                />
+                {errors.customer_email && <p className="text-red-500 text-sm mt-1">{errors.customer_email}</p>}
+              </div>
+
+              <div>
+                <textarea
+                  placeholder="Địa chỉ giao hàng"
+                  className="w-full border p-3 rounded"
+                  value={formData.delivery_address}
+                  onChange={e => setFormData({ ...formData, delivery_address: e.target.value })}
+                />
+                {errors.delivery_address && <p className="text-red-500 text-sm mt-1">{errors.delivery_address}</p>}
+              </div>
+
+              <div>
+                <select
+                  className="w-full border p-3 rounded"
+                  value={formData.shipping_city}
+                  onChange={e => setFormData({ ...formData, shipping_city: e.target.value })}
+                >
+                  <option value="">Chọn thành phố</option>
+                  <option value="Hà Nội">Hà Nội</option>
+                  <option value="TP Hồ Chí Minh">TP Hồ Chí Minh</option>
+                  <option value="Đà Nẵng">Đà Nẵng</option>
+                  <option value="Hải Phòng">Hải Phòng</option>
+                  <option value="Cần Thơ">Cần Thơ</option>
+                </select>
+                {errors.shipping_city && <p className="text-red-500 text-sm mt-1">{errors.shipping_city}</p>}
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-orange-500 text-white py-3 rounded"
+              >
+                Xác nhận đặt hàng
               </button>
             </form>
           </div>
         </div>
       )}
+
     </div>
   )
 }

@@ -114,8 +114,6 @@ export default function UserProfile() {
           />
         </div>
 
-        <p className="font-semibold">Quyền: {profile.is_admin ? 'Admin' : 'User'}</p>
-
         <button
           type="submit"
           disabled={saving}
