@@ -142,13 +142,13 @@ export default function Header() {
               <>
                 <Link
                   to="/login"
-                  className="px-4 py-2 border border-white rounded-lg font-semibold hover:bg-white hover:text-[#3E5D2A] transition text-sm md:text-base"
+                  className="block py-2 px-3 border border-white rounded font-semibold hover:bg-white hover:text-[#3E5D2A] transition whitespace-nowrap"
                 >
                   Đăng nhập
                 </Link>
                 <Link
                   to="/signup"
-                  className="px-4 py-2 bg-orange-500 hover:bg-orange-600 rounded-lg font-semibold transition text-sm md:text-base"
+                  className="block py-2 px-3 bg-orange-500 rounded font-semibold hover:bg-orange-600 transition whitespace-nowrap"
                 >
                   Đăng ký
                 </Link>
