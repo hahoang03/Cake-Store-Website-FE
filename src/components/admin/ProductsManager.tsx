@@ -224,8 +224,8 @@ export default function ProductsManager() {
                   Sửa
                 </button>
 
-                {/* Chỉ hiện nút Xóa khi is_active và sold_qty === 0 */}
-                {p.is_active && p.sold_qty === 0 && (
+                {/* Chỉ hiện nút Xóa khi sold_qty === 0 */}
+                {p.sold_qty === 0 && (
                   <button className="text-red-500" onClick={() => deleteProduct(p.id)}>
                     Xóa
                   </button>
