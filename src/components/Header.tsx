@@ -93,7 +93,7 @@ export default function Header() {
               <Link className="nav-link" to="/contact">Liên hệ</Link>
               <Link className="nav-link" to="/stores">Cửa hàng</Link>
               <Link className="nav-link" to="/news">Tin tức</Link>
-              <Link className="nav-link" to="/custom">Custom bánh</Link>
+              <Link className="nav-link" to="/custom">Thiết kế bánh</Link>
               {isRegisteredUser && <Link className="nav-link" to="/my-orders">Đơn hàng</Link>}
             </nav>
           )}

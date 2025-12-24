@@ -74,7 +74,7 @@ export default function CakeDesigner() {
 
                 {/* ================= CONTROL ================= */}
                 <aside className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
-                    <h1 className="text-xl font-semibold text-[#3E5D2A]">Custom bánh theo sở thích</h1>
+                    <h1 className="text-xl font-semibold text-[#3E5D2A]">Thiết kế bánh theo sở thích</h1>
 
                     {/* STEP NAV */}
                     <div className="flex gap-2">
