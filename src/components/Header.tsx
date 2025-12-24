@@ -18,11 +18,12 @@ export default function Header() {
   const [categories, setCategories] = useState<Category[]>([])
   const [showMenuDropdown, setShowMenuDropdown] = useState(false)
   const [userName, setUserName] = useState('')
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false) // state mobile
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const isAdmin = profile?.is_admin === true
   const isRegisteredUser = user && !isAdmin
 
+  // ===== FETCH CATEGORIES =====
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -35,12 +36,14 @@ export default function Header() {
     fetchCategories()
   }, [])
 
+  // ===== FETCH PROFILE =====
   useEffect(() => {
     const fetchProfile = async () => {
       if (user) {
         try {
           const res = await api.get('/api/auth/profile')
-          setUserName(res.data.name || '')
+          console.log('Profile API:', res.data)
+          setUserName(res.data.data.name || '') // lấy đúng từ API
         } catch (err) {
           console.error(err)
         }
@@ -49,6 +52,7 @@ export default function Header() {
     fetchProfile()
   }, [user])
 
+  // ===== SIGN OUT =====
   const handleSignOut = async () => {
     await signOut()
     navigate('/')
@@ -111,9 +115,22 @@ export default function Header() {
 
             {user ? (
               <>
-                <Link to="/user-profile" className="px-3 py-1 bg-white text-[#3E5D2A] rounded-lg font-semibold hover:bg-gray-100 transition">
-                  {userName || 'User'}
-                </Link>
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg font-semibold transition text-sm md:text-base"
+                  >
+                    Admin
+                  </Link>
+                )}
+                {!isAdmin && (
+                  <Link
+                    to="/user-profile"
+                    className="px-3 py-1 bg-white text-[#3E5D2A] rounded-lg font-semibold hover:bg-gray-100 transition"
+                  >
+                    {userName || 'User'}
+                  </Link>
+                )}
                 <button
                   onClick={handleSignOut}
                   className="px-4 py-2 border border-white rounded-lg font-semibold hover:bg-white hover:text-[#3E5D2A] transition"
@@ -123,22 +140,18 @@ export default function Header() {
               </>
             ) : (
               <>
-                {/* Nút đăng nhập */}
                 <Link
                   to="/login"
                   className="px-4 py-2 border border-white rounded-lg font-semibold hover:bg-white hover:text-[#3E5D2A] transition text-sm md:text-base"
                 >
                   Đăng nhập
                 </Link>
-
-                {/* Nút đăng ký */}
                 <Link
                   to="/signup"
                   className="px-4 py-2 bg-orange-500 hover:bg-orange-600 rounded-lg font-semibold transition text-sm md:text-base"
                 >
                   Đăng ký
                 </Link>
-
               </>
             )}
 
@@ -175,6 +188,48 @@ export default function Header() {
           <Link className="nav-link" to="/news">Tin tức</Link>
           <Link className="nav-link" to="/custom">Thiết kế bánh</Link>
           {isRegisteredUser && <Link className="nav-link" to="/my-orders">Đơn hàng</Link>}
+
+          {user ? (
+            <>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="block py-2 px-3 bg-red-500 rounded hover:bg-red-600 font-semibold transition"
+                >
+                  Admin
+                </Link>
+              )}
+              {!isAdmin && (
+                <Link
+                  to="/user-profile"
+                  className="block py-2 px-3 bg-white text-[#3E5D2A] rounded font-semibold hover:bg-gray-100 transition"
+                >
+                  {userName || 'User'}
+                </Link>
+              )}
+              <button
+                onClick={handleSignOut}
+                className="block w-full py-2 px-3 border border-white rounded font-semibold hover:bg-white hover:text-[#3E5D2A] transition"
+              >
+                Đăng xuất
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="block py-2 px-3 border border-white rounded font-semibold hover:bg-white hover:text-[#3E5D2A] transition"
+              >
+                Đăng nhập
+              </Link>
+              <Link
+                to="/signup"
+                className="block py-2 px-3 bg-orange-500 rounded font-semibold hover:bg-orange-600 transition"
+              >
+                Đăng ký
+              </Link>
+            </>
+          )}
         </div>
       )}
 

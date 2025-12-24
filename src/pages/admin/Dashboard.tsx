@@ -57,7 +57,7 @@ export default function Dashboard() {
       <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="border-b border-gray-200">
           <nav className="flex">
-            {tabs.map((tab) => {
+            { tabs.map((tab) => {
               const Icon = tab.icon;
               return (
                 <button

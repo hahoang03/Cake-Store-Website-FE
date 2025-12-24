@@ -26,7 +26,6 @@ export default function UserProfile() {
   const fetchProfile = async () => {
     try {
       const res = await api.get('/api/auth/profile', {
-       // headers: { Authorization: `Bearer ${user?.token}` },
       });
       const data = res.data.data;
       setProfile(data);
@@ -50,7 +49,7 @@ export default function UserProfile() {
       if (formData.password) payload.password = formData.password;
 
       await api.put('/api/auth/profile', payload, {
-       // headers: { Authorization: `Bearer ${user?.token}` },
+       
       });
 
       setMessage('Cập nhật thông tin thành công!');
