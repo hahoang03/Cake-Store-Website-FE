@@ -123,12 +123,22 @@ export default function Header() {
               </>
             ) : (
               <>
-                <Link to="/login" className="px-4 py-2 border border-white rounded-lg font-semibold hover:bg-white hover:text-[#3E5D2A] transition">
+                {/* Nút đăng nhập */}
+                <Link
+                  to="/login"
+                  className="px-4 py-2 border border-white rounded-lg font-semibold hover:bg-white hover:text-[#3E5D2A] transition text-sm md:text-base"
+                >
                   Đăng nhập
                 </Link>
-                <Link to="/signup" className="px-4 py-2 bg-orange-500 hover:bg-orange-600 rounded-lg font-semibold transition">
+
+                {/* Nút đăng ký */}
+                <Link
+                  to="/signup"
+                  className="px-4 py-2 bg-orange-500 hover:bg-orange-600 rounded-lg font-semibold transition text-sm md:text-base"
+                >
                   Đăng ký
                 </Link>
+
               </>
             )}
 
@@ -159,12 +169,12 @@ export default function Header() {
               ))}
             </div>
           </div>
-          <Link to="/delivery" className="block py-2 nav-link">Giao hàng</Link>
-          <Link to="/contact" className="block py-2 nav-link">Liên hệ</Link>
-          <Link to="/stores" className="block py-2 nav-link">Cửa hàng</Link>
-          <Link to="/loyalty" className="block py-2 nav-link">Khách hàng thân thiết</Link>
-          <Link to="/news" className="block py-2 nav-link">Tin tức</Link>
-          {isRegisteredUser && <Link to="/my-orders" className="block py-2 nav-link">Đơn hàng</Link>}
+          <Link className="nav-link" to="/delivery">Giao hàng</Link>
+          <Link className="nav-link" to="/contact">Liên hệ</Link>
+          <Link className="nav-link" to="/stores">Cửa hàng</Link>
+          <Link className="nav-link" to="/news">Tin tức</Link>
+          <Link className="nav-link" to="/custom">Thiết kế bánh</Link>
+          {isRegisteredUser && <Link className="nav-link" to="/my-orders">Đơn hàng</Link>}
         </div>
       )}
 
